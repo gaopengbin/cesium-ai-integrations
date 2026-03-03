@@ -4,10 +4,6 @@ import { BaseCommunicationServer } from "./baseCommunicationServer.js";
 export class CesiumSSEServer extends BaseCommunicationServer {
   private sseClient: Response | null = null;
 
-  protected override getServerToStart() {
-    return this.app;
-  }
-
   protected override getProtocolName(): string {
     return "SSE HTTP";
   }

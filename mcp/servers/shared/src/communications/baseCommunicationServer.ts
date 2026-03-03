@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
-import type { Server as HttpServer } from "http";
+import { createServer, type Server as HttpServer } from "http";
+import type { ListenOptions } from "net";
 import { randomUUID } from "crypto";
 import { ICommunicationServer } from "./communication-server.js";
 import {
@@ -28,7 +29,7 @@ interface PendingCommand {
 }
 
 interface ServerToStart {
-  listen: (port: number, callback: () => void) => HttpServer;
+  listen(options: ListenOptions, callback: () => void): HttpServer;
 }
 
 /**
@@ -51,10 +52,13 @@ export abstract class BaseCommunicationServer implements ICommunicationServer {
   }
 
   /**
-   * Get the server instance to start (can be HTTP server or other)
-   * Subclasses override this to return their specific server instance
+   * Get the HTTP server instance to start.
+   * The default implementation wraps the Express app in an HTTP server.
+   * Subclasses may override to return a pre-constructed server (e.g. for WebSocket).
    */
-  protected abstract getServerToStart(): ServerToStart;
+  protected getServerToStart(): ServerToStart {
+    return createServer(this.app);
+  }
 
   /**
    * Get the protocol name for logging
@@ -153,18 +157,32 @@ export abstract class BaseCommunicationServer implements ICommunicationServer {
     const strictPort = config.strictPort ?? false;
     const serverToStart = this.getServerToStart();
 
-    this.server = serverToStart.listen(port, () => {
-      this.actualPort = port;
-      this.startTime = Date.now();
-      this.log(
-        "info",
-        `${this.getProtocolName()} server running on port ${port}`,
-      );
-      this.onServerStarted();
-      resolve(port);
-    });
+    // exclusive:true sets SO_EXCLUSIVEADDRUSE on Windows so EADDRINUSE fires
+    // reliably even when SO_REUSEADDR is set (the Node.js default)
+    const attemptServer = serverToStart.listen(
+      { port, exclusive: true },
+      () => {
+        // Read the actual bound port — critical when port=0 lets the OS choose
+        const address = attemptServer.address();
+        const actualBoundPort =
+          typeof address === "object" && address !== null ? address.port : port;
+        this.actualPort = actualBoundPort;
+        this.startTime = Date.now();
+        this.log(
+          "info",
+          `${this.getProtocolName()} server running on port ${actualBoundPort}`,
+        );
+        this.onServerStarted();
+        resolve(actualBoundPort);
+      },
+    );
 
-    this.server.on("error", (err: NodeJS.ErrnoException) => {
+    // Track the current attempt so stop() can clean up if called during startup
+    this.server = attemptServer;
+
+    attemptServer.on("error", (err: NodeJS.ErrnoException) => {
+      // Close the failed server before retrying or rejecting
+      attemptServer.close();
       if (err.code === "EADDRINUSE") {
         if (strictPort) {
           reject(

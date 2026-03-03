@@ -41,27 +41,25 @@ import {
 import { CesiumEntity, CesiumViewer } from "../types/cesium-types.js";
 
 class CesiumEntityManager implements ManagerInterface {
-  viewer: CesiumViewer;
-  prefix: string;
-  handlers: Map<string, CommandHandler>;
+  public viewer: CesiumViewer;
+  private handlers: Map<string, CommandHandler>;
 
   constructor(viewer: CesiumViewer) {
     this.viewer = viewer;
-    this.prefix = "entity";
     this.handlers = new Map<string, CommandHandler>();
   }
 
   /**
    * Setup and initialize the manager
    */
-  setUp(): void {
+  public setUp(): void {
     // Initialization logic if needed
   }
 
   /**
    * Add a point entity at the specified location
    */
-  async addPoint(
+  private async addPoint(
     longitude: number,
     latitude: number,
     height: number = 0,
@@ -100,7 +98,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Add a text label entity
    */
-  async addLabel(
+  private async addLabel(
     longitude: number,
     latitude: number,
     height: number = 0,
@@ -141,7 +139,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Add a polygon entity
    */
-  async addPolygon(
+  private async addPolygon(
     coordinates: Position[],
     options: PolygonOptions = {},
   ): Promise<MCPCommandResult> {
@@ -178,7 +176,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Add a polyline entity
    */
-  async addPolyline(
+  private async addPolyline(
     coordinates: Position[],
     options: PolylineOptions = {},
   ): Promise<MCPCommandResult> {
@@ -212,7 +210,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Add a billboard entity (image marker)
    */
-  async addBillboard(
+  private async addBillboard(
     longitude: number,
     latitude: number,
     height: number = 0,
@@ -254,7 +252,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Add a 3D model entity
    */
-  async addModel(
+  private async addModel(
     longitude: number,
     latitude: number,
     height: number = 0,
@@ -298,7 +296,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Add an ellipse entity
    */
-  async addEllipse(
+  private async addEllipse(
     longitude: number,
     latitude: number,
     height: number = 0,
@@ -346,7 +344,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Add a rectangle entity
    */
-  async addRectangle(
+  private async addRectangle(
     coordinates: { west: number; south: number; east: number; north: number },
     options: RectangleOptions = {},
   ): Promise<MCPCommandResult> {
@@ -384,7 +382,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Add a wall entity
    */
-  async addWall(
+  private async addWall(
     positions: Position[],
     options: WallOptions = {},
   ): Promise<MCPCommandResult> {
@@ -420,7 +418,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Add a cylinder entity
    */
-  async addCylinder(
+  private async addCylinder(
     longitude: number,
     latitude: number,
     height: number = 0,
@@ -467,7 +465,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Add a box entity
    */
-  async addBox(
+  private async addBox(
     longitude: number,
     latitude: number,
     height: number = 0,
@@ -510,7 +508,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Add a corridor entity
    */
-  async addCorridor(
+  private async addCorridor(
     positions: Position[],
     width: number,
     options: CorridorOptions = {},
@@ -549,7 +547,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Remove an entity by ID
    */
-  async removeEntity(entityId: string): Promise<MCPCommandResult> {
+  private async removeEntity(entityId: string): Promise<MCPCommandResult> {
     return new Promise((resolve) => {
       try {
         const entity = this.viewer.entities.getById(entityId);
@@ -578,7 +576,9 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Remove entities by name pattern
    */
-  async removeEntitiesByName(namePattern: string): Promise<MCPCommandResult> {
+  private async removeEntitiesByName(
+    namePattern: string,
+  ): Promise<MCPCommandResult> {
     return new Promise((resolve) => {
       try {
         const entities = this.viewer.entities.values;
@@ -610,7 +610,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * List all entities with detailed information
    */
-  async listEntities(): Promise<MCPCommandResult> {
+  private async listEntities(): Promise<MCPCommandResult> {
     return new Promise((resolve) => {
       try {
         const entities = [];
@@ -661,7 +661,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Helper function to determine entity type
    */
-  getEntityType(entity: CesiumEntity): string {
+  private getEntityType(entity: CesiumEntity): string {
     if (entity.point) {
       return "point";
     }
@@ -704,7 +704,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Handle generic entity_add command by detecting entity type
    */
-  async handleEntityAdd(
+  private async handleEntityAdd(
     command: Record<string, unknown>,
   ): Promise<MCPCommandResult> {
     const entity =
@@ -1075,14 +1075,14 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Shutdown and cleanup
    */
-  shutdown(): void {
+  public shutdown(): void {
     // Cleanup if needed
   }
 
   /**
    * Get command handlers for this manager
    */
-  getCommandHandlers(): Map<string, CommandHandler> {
+  public getCommandHandlers(): Map<string, CommandHandler> {
     // entity_add: Generic add command that detects entity type from structure
     this.handlers.set("entity_add", async (cmd) => this.handleEntityAdd(cmd));
 

@@ -30,8 +30,10 @@ async function main() {
         communicationServerPort: PORT,
         communicationServerMaxRetries: MAX_RETRIES,
         communicationServerStrictPort: STRICT_PORT,
-        // mcpTransport: process.env.MCP_TRANSPORT || "stdio", optionally specify transport type
-        // mcpTransportEndpoint: process.env.MCP_TRANSPORT_ENDPOINT, optionally specify transport endpoint
+        mcpTransport: (process.env.MCP_TRANSPORT || "stdio") as
+          | "stdio"
+          | "streamable-http",
+        mcpTransportEndpoint: process.env.MCP_TRANSPORT_ENDPOINT,
       },
       communicationServer,
     );

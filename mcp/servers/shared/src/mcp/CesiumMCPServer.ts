@@ -63,7 +63,9 @@ export class CesiumMCPServer {
         const actualPort = await this.communicationServer.start(
           this.serverConfig,
         );
-        console.error(`Communication server started on port ${actualPort}`);
+        if (!this.config.silent) {
+          console.error(`Communication server started on port ${actualPort}`);
+        }
       }
 
       // Register all tools
@@ -88,9 +90,13 @@ export class CesiumMCPServer {
       // Setup graceful shutdown
       this.setupGracefulShutdown();
 
-      console.error(`✅ ${this.config.name} started successfully`);
+      if (!this.config.silent) {
+        console.error(`✅ ${this.config.name} started successfully`);
+      }
     } catch (error) {
-      console.error(`❌ Failed to start ${this.config.name}:`, error);
+      if (!this.config.silent) {
+        console.error(`❌ Failed to start ${this.config.name}:`, error);
+      }
       throw error;
     }
   }
@@ -101,7 +107,9 @@ export class CesiumMCPServer {
   private async startStdioTransport(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.mcpServer.connect(transport);
-    console.error("MCP Server running with stdio transport");
+    if (!this.config.silent) {
+      console.error("MCP Server running with stdio transport");
+    }
   }
 
   /**
@@ -119,10 +127,14 @@ export class CesiumMCPServer {
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
       onsessioninitialized: (sessionId) => {
-        console.error(`Session initialized: ${sessionId}`);
+        if (!this.config.silent) {
+          console.error(`Session initialized: ${sessionId}`);
+        }
       },
       onsessionclosed: (sessionId) => {
-        console.error(`Session closed: ${sessionId}`);
+        if (!this.config.silent) {
+          console.error(`Session closed: ${sessionId}`);
+        }
       },
     });
 
@@ -134,9 +146,11 @@ export class CesiumMCPServer {
     });
 
     this.mcpTransportServer = this.mcpTransportApp.listen(mcpPort, () => {
-      console.error(
-        `MCP Server running with Streamable HTTP transport on port ${mcpPort}${endpoint}`,
-      );
+      if (!this.config.silent) {
+        console.error(
+          `MCP Server running with Streamable HTTP transport on port ${mcpPort}${endpoint}`,
+        );
+      }
     });
   }
 
@@ -144,13 +158,17 @@ export class CesiumMCPServer {
    * Stop the server gracefully
    */
   public async stop(): Promise<void> {
-    console.error("\n🛑 Shutting down...");
+    if (!this.config.silent) {
+      console.error("\n🛑 Shutting down...");
+    }
 
     // Close MCP transport server if it exists
     if (this.mcpTransportServer) {
       await new Promise<void>((resolve) => {
         this.mcpTransportServer!.close(() => {
-          console.error("MCP transport server closed");
+          if (!this.config.silent) {
+            console.error("MCP transport server closed");
+          }
           resolve();
         });
       });

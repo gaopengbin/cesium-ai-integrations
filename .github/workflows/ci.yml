@@ -42,3 +42,7 @@ jobs:
     - name: Build mcp servers
       working-directory: ./mcp
       run: pnpm run build
+    
+    - name: Run tests
+      working-directory: ./mcp
+      run: pnpm test
