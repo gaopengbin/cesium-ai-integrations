@@ -138,7 +138,7 @@ describe("Communication Channel — WebSocket", () => {
   });
 
   it("should allow a new viewer to connect after the previous one disconnects", async () => {
-    viewerClient.disconnect();
+    await viewerClient.disconnect();
     expect(viewerClient.isConnected()).toBe(false);
 
     // Create a fresh viewer and connect
@@ -162,7 +162,7 @@ describe("Communication Channel — WebSocket", () => {
       true,
     );
 
-    newClient.disconnect();
+    await newClient.disconnect();
   });
 
   it("should update viewer state through the WebSocket channel", async () => {
@@ -278,11 +278,8 @@ describe("Communication Channel — SSE", () => {
   });
 
   it("should allow a new viewer to connect after the previous one disconnects", async () => {
-    viewerClient.disconnect();
+    await viewerClient.disconnect();
     expect(viewerClient.isConnected()).toBe(false);
-
-    // Give the server a moment to notice the disconnect
-    await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Create a fresh viewer and connect
     const newViewer = createTestViewer();
@@ -305,7 +302,7 @@ describe("Communication Channel — SSE", () => {
       true,
     );
 
-    newClient.disconnect();
+    await newClient.disconnect();
   });
 
   it("should reject a second simultaneous SSE connection", async () => {

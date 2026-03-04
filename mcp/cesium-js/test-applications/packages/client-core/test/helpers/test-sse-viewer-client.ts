@@ -31,6 +31,8 @@ export class TestSSEViewerClient implements ITestViewerClient {
   private rejectConnection!: (error: Error) => void;
   private readonly eventsUrl: string;
   private readonly resultUrl: string;
+  /** Tracks the in-flight streamEvents() promise so disconnect() can await it. */
+  private _streamSettled: Promise<void> = Promise.resolve();
 
   constructor(
     private manager: ManagerInterface,
@@ -52,13 +54,15 @@ export class TestSSEViewerClient implements ITestViewerClient {
 
   private connect(): void {
     this.abortController = new AbortController();
-    this.streamEvents(this.abortController.signal).catch((err) => {
-      if (!this.connected) {
-        this.rejectConnection(
-          err instanceof Error ? err : new Error(String(err)),
-        );
-      }
-    });
+    this._streamSettled = this.streamEvents(this.abortController.signal).catch(
+      (err) => {
+        if (!this.connected) {
+          this.rejectConnection(
+            err instanceof Error ? err : new Error(String(err)),
+          );
+        }
+      },
+    );
 
     // Timeout if we never receive the "connected" event
     setTimeout(() => {
@@ -220,7 +224,13 @@ export class TestSSEViewerClient implements ITestViewerClient {
     this.abortController?.abort();
     this.abortController = null;
     this.manager.shutdown();
-    return Promise.resolve();
+    // Wait for the SSE stream to fully settle, then give the server a brief
+    // window to fire req.on('close') before the next test tries to connect.
+    // Without this delay the server-side sseClient may still be set when
+    // beforeEach for the next test runs, producing a spurious 409 response.
+    return this._streamSettled.then(
+      () => new Promise<void>((resolve) => setTimeout(resolve, 100)),
+    );
   }
 
   getManager<T extends ManagerInterface>(): T {
