@@ -33,9 +33,9 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/coverage-v8": "^4.0.18",
     "cesium": "^1.112.0",
     "typescript": "^5.9.3",
-    "vitest": "^2.1.8"
+    "vitest": "^4.0.18"
   }
 }
