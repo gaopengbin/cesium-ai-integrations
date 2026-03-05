@@ -40,10 +40,10 @@ describe("registerAddPointEntity", () => {
     );
   });
 
-  it("returns success response for valid point entity", async () => {
+  it("handles basic success with default options", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
-      totalEntities: 1,
+      totalEntities: 2,
     });
 
     const response = await registeredHandler(validArgs);
@@ -51,30 +51,18 @@ describe("registerAddPointEntity", () => {
     expect(response.structuredContent.success).toBe(true);
     expect(response.structuredContent.message).toContain("Point entity");
     expect(response.isError).toBe(false);
-  });
-
-  it("sends entity_add command with correct type", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
+    expect(response.structuredContent.entityName).toBe("Point");
+    expect(response.structuredContent.message).toContain('"Point"');
+    expect(response.structuredContent.position).toEqual(validArgs.position);
+    expect(response.structuredContent.stats?.totalEntities).toBe(2);
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command).toMatchObject({ type: "entity_add" });
-  });
-
-  it("includes position in entity", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
-
-    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.entity.position).toEqual(validArgs.position);
+    expect(command.entity.id).toMatch(/^point_/);
+    expect(command.entity.point).toBeDefined();
+    expect(command.entity.point.pixelSize).toBeDefined();
+    expect(command.entity.point.color).toBeDefined();
   });
 
   it("uses provided name", async () => {
@@ -92,16 +80,17 @@ describe("registerAddPointEntity", () => {
     expect(response.structuredContent.message).toContain("My Custom Point");
   });
 
-  it("uses provided id", async () => {
+  it("handles success with provided id", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
-      totalEntities: 2,
+      totalEntities: 1,
     });
 
-    await registeredHandler({ ...validArgs, id: "custom-id-123" });
+    const response = await registeredHandler({ ...validArgs, id: "point-42" });
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.id).toBe("custom-id-123");
+    expect(command.entity.id).toBe("point-42");
+    expect(response.structuredContent.entityId).toBe("point-42");
   });
 
   it("returns error response when executeCommand rejects", async () => {
@@ -126,5 +115,31 @@ describe("registerAddPointEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+  });
+
+  it("forwards description to entity command", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      totalEntities: 1,
+    });
+
+    await registeredHandler({ ...validArgs, description: "<p>A point</p>" });
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command.entity.description).toBe("<p>A point</p>");
+  });
+
+  it("uses explicit point properties when point arg is provided", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      totalEntities: 1,
+    });
+
+    const customPoint = { pixelSize: 20, color: { red: 1, green: 0, blue: 0 } };
+    await registeredHandler({ ...validArgs, point: customPoint });
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command.entity.point.pixelSize).toBe(20);
+    expect(command.entity.point.color).toEqual({ red: 1, green: 0, blue: 0 });
   });
 });

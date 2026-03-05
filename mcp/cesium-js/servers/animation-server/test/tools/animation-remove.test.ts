@@ -37,12 +37,12 @@ describe("animation_remove tool", () => {
   });
 
   describe("Happy paths", () => {
-    it("should send remove command with animationId", async () => {
+    it("should send remove command and return correct response", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
         success: true,
       });
 
-      await registeredHandler({ animationId: "anim-001" });
+      const response = await registeredHandler({ animationId: "anim-001" });
 
       expect(mockCommunicationServer.executeCommand).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -51,17 +51,6 @@ describe("animation_remove tool", () => {
         }),
         expect.any(Number),
       );
-    });
-
-    it("should return success response with animationId in message", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({
-        animationId: "anim-001",
-      });
-
       expect(response.structuredContent.success).toBe(true);
       expect(response.structuredContent.message).toContain("anim-001");
       expect(response.isError).toBe(false);

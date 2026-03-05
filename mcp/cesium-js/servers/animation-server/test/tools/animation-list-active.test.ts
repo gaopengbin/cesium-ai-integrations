@@ -37,7 +37,7 @@ describe("animation_list_active tool", () => {
   });
 
   describe("Happy paths", () => {
-    it("should return empty list when no animations", async () => {
+    it("should return empty list and send correct command when no animations", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
         success: true,
         animations: [],
@@ -46,12 +46,16 @@ describe("animation_list_active tool", () => {
 
       const response = await registeredHandler();
 
+      expect(mockCommunicationServer.executeCommand).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "animation_list_active" }),
+        expect.any(Number),
+      );
       expect(response.structuredContent.success).toBe(true);
       expect(response.structuredContent.animations).toHaveLength(0);
       expect(response.structuredContent.stats.totalAnimations).toBe(0);
     });
 
-    it("should map animations from client data", async () => {
+    it("should map animations from client data and include IDs in message", async () => {
       const clientAnim = {
         animationId: "anim-001",
         startTime: "2024-01-01T00:00:00Z",
@@ -71,39 +75,8 @@ describe("animation_list_active tool", () => {
       );
       expect(response.structuredContent.animations[0].clockMultiplier).toBe(5);
       expect(response.structuredContent.animations[0].isAnimating).toBe(true);
-    });
-
-    it("should include animation IDs in message when animations present", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-        animations: [
-          {
-            animationId: "anim-test",
-            startTime: "2024-01-01T00:00:00Z",
-            stopTime: "2024-01-01T01:00:00Z",
-          },
-        ],
-        clockState: { shouldAnimate: true, multiplier: 1 },
-      });
-
-      const response = await registeredHandler();
-
-      expect(response.structuredContent.message).toContain("anim-test");
-    });
-
-    it("should send correct command type", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-        animations: [],
-        clockState: { shouldAnimate: false, multiplier: 1 },
-      });
-
-      await registeredHandler();
-
-      expect(mockCommunicationServer.executeCommand).toHaveBeenCalledWith(
-        expect.objectContaining({ type: "animation_list_active" }),
-        expect.any(Number),
-      );
+      expect(response.structuredContent.stats.totalAnimations).toBe(1);
+      expect(response.structuredContent.message).toContain("anim-001");
     });
   });
 

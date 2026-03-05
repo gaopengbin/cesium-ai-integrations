@@ -37,12 +37,12 @@ describe("clock_control tool", () => {
   });
 
   describe("Happy paths - configure action", () => {
-    it("should send configure command with clock config", async () => {
+    it("should send configure command and return correct response", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
         success: true,
       });
 
-      await registeredHandler({
+      const response = await registeredHandler({
         action: "configure",
         clock: {
           startTime: "2024-01-01T00:00:00Z",
@@ -59,43 +59,19 @@ describe("clock_control tool", () => {
         }),
         expect.any(Number),
       );
-    });
-
-    it("should return success response for configure", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({
-        action: "configure",
-        clock: { multiplier: 5 },
-      });
-
       expect(response.structuredContent.success).toBe(true);
       expect(response.structuredContent.message).toContain("Clock configured");
-    });
-
-    it("should include multiplier in configure message", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({
-        action: "configure",
-        clock: { multiplier: 100 },
-      });
-
-      expect(response.structuredContent.message).toContain("100");
+      expect(response.structuredContent.message).toContain("10");
     });
   });
 
   describe("Happy paths - setTime action", () => {
-    it("should send setTime command", async () => {
+    it("should send setTime command and return correct response", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
         success: true,
       });
 
-      await registeredHandler({
+      const response = await registeredHandler({
         action: "setTime",
         currentTime: "2024-06-15T12:00:00Z",
       });
@@ -108,18 +84,6 @@ describe("clock_control tool", () => {
         }),
         expect.any(Number),
       );
-    });
-
-    it("should return success response for setTime", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({
-        action: "setTime",
-        currentTime: "2024-06-15T12:00:00Z",
-      });
-
       expect(response.structuredContent.success).toBe(true);
       expect(response.structuredContent.message).toContain(
         "2024-06-15T12:00:00Z",
@@ -128,12 +92,12 @@ describe("clock_control tool", () => {
   });
 
   describe("Happy paths - setMultiplier action", () => {
-    it("should send setMultiplier command", async () => {
+    it("should send setMultiplier command and return correct response", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
         success: true,
       });
 
-      await registeredHandler({
+      const response = await registeredHandler({
         action: "setMultiplier",
         multiplier: 1000,
       });
@@ -146,19 +110,8 @@ describe("clock_control tool", () => {
         }),
         expect.any(Number),
       );
-    });
-
-    it("should include multiplier value in message", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({
-        action: "setMultiplier",
-        multiplier: 500,
-      });
-
-      expect(response.structuredContent.message).toContain("500");
+      expect(response.structuredContent.success).toBe(true);
+      expect(response.structuredContent.message).toContain("1000");
     });
   });
 

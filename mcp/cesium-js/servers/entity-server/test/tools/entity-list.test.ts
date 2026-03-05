@@ -36,7 +36,7 @@ describe("registerListEntities", () => {
     );
   });
 
-  it("returns empty list when no entities", async () => {
+  it("handles default empty list with correct command", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
       entities: [],
@@ -49,6 +49,12 @@ describe("registerListEntities", () => {
     expect(response.structuredContent.totalCount).toBe(0);
     expect(response.structuredContent.filteredCount).toBe(0);
     expect(response.structuredContent.message).toContain("0 entities");
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command).toMatchObject({
+      type: "entity_list",
+      includeDetails: false,
+    });
   });
 
   it("returns populated entity list", async () => {
@@ -69,21 +75,6 @@ describe("registerListEntities", () => {
     expect(response.structuredContent.filteredCount).toBe(2);
   });
 
-  it("sends entity_list command with default options", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      entities: [],
-    });
-
-    await registeredHandler({});
-
-    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command).toMatchObject({
-      type: "entity_list",
-      includeDetails: false,
-    });
-  });
-
   it("passes includeDetails=true to command", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
@@ -99,22 +90,7 @@ describe("registerListEntities", () => {
     });
   });
 
-  it("passes filterByType to command", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      entities: [],
-    });
-
-    await registeredHandler({ filterByType: "point" });
-
-    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command).toMatchObject({
-      type: "entity_list",
-      filterByType: "point",
-    });
-  });
-
-  it("applies filteredCount based on filterByType", async () => {
+  it("handles filterByType option", async () => {
     const entities = [
       { id: "point_001", name: "P1", type: "point" },
       { id: "billboard_001", name: "B1", type: "billboard" },
@@ -126,6 +102,11 @@ describe("registerListEntities", () => {
 
     const response = await registeredHandler({ filterByType: "point" });
 
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command).toMatchObject({
+      type: "entity_list",
+      filterByType: "point",
+    });
     expect(response.structuredContent.totalCount).toBe(2);
     expect(response.structuredContent.filteredCount).toBe(1);
     expect(response.structuredContent.message).toContain("type 'point'");
@@ -153,6 +134,7 @@ describe("registerListEntities", () => {
     expect(response.structuredContent.success).toBe(false);
     expect(response.structuredContent.entities).toEqual([]);
     expect(response.isError).toBe(true);
+    expect(response.structuredContent.message).toContain("Failed");
   });
 
   it("returns error response when result.success is false", async () => {
@@ -165,5 +147,35 @@ describe("registerListEntities", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+  });
+
+  it("includes responseTime in stats", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      entities: [],
+    });
+
+    const response = await registeredHandler({});
+
+    expect(
+      response.structuredContent.stats.responseTime,
+    ).toBeGreaterThanOrEqual(0);
+  });
+
+  it("includes entity names in content text summary", async () => {
+    const entities = [
+      { id: "point_001", name: "Denver", type: "point" },
+      { id: "billboard_001", name: "Airport", type: "billboard" },
+    ];
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      entities,
+    });
+
+    const response = await registeredHandler({});
+
+    const text = response.content[0].text;
+    expect(text).toContain("Denver");
+    expect(text).toContain("Airport");
   });
 });

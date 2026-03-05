@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import {
   DEFAULT_COMMAND_TIMEOUT_MS,
+  GRACEFUL_SHUTDOWN_TIMEOUT_MS,
   HEARTBEAT_INTERVAL_MS,
   MCP_PORT_OFFSET,
-  GRACEFUL_SHUTDOWN_TIMEOUT_MS,
-  TIMEOUT_BUFFER_MS,
-  ServerDefaults,
-  ResponseEmoji,
   RESPONSE_EMOJIS,
-} from "../../src/utils/constants";
+  ResponseEmoji,
+  ServerDefaults,
+  TIMEOUT_BUFFER_MS,
+} from "../../../src/utils/constants";
 
 // ---------------------------------------------------------------------------
 describe("Numeric constants", () => {

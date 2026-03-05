@@ -276,11 +276,6 @@ describe("OrbitOptionsSchema", () => {
       const result = OrbitOptionsSchema.safeParse({ speed: -0.005 });
       expect(result.success).toBe(true);
     });
-
-    it("should accept zero speed", () => {
-      const result = OrbitOptionsSchema.safeParse({ speed: 0 });
-      expect(result.success).toBe(true);
-    });
   });
 
   describe("Unhappy paths", () => {
@@ -306,6 +301,11 @@ describe("OrbitOptionsSchema", () => {
 
     it("should reject empty string for direction", () => {
       const result = OrbitOptionsSchema.safeParse({ direction: "" });
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject zero speed", () => {
+      const result = OrbitOptionsSchema.safeParse({ speed: 0 });
       expect(result.success).toBe(false);
     });
   });

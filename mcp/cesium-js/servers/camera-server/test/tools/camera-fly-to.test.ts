@@ -191,6 +191,21 @@ describe("camera-fly-to tool", () => {
         TIMEOUT_BUFFER_MS, // 0 + buffer
       );
     });
+
+    it("should include responseTime in stats", async () => {
+      const destination = { longitude: 0, latitude: 0, height: 0 };
+
+      vi.mocked(mockCommunicationServer.executeCommand).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(() => resolve({ success: true, actualDuration: 3 }), 10);
+          }),
+      );
+
+      const response = await registeredHandler({ destination });
+
+      expect(response.structuredContent.stats.responseTime).toBeGreaterThan(0);
+    });
   });
 
   describe("Unhappy paths", () => {
@@ -206,6 +221,7 @@ describe("camera-fly-to tool", () => {
       expect(response.structuredContent.success).toBe(false);
       expect(response.structuredContent.message).toContain("Connection failed");
       expect(response.isError).toBe(true);
+      expect(response.structuredContent.stats.responseTime).toBe(0);
     });
 
     it("should handle result with success=false", async () => {
@@ -238,18 +254,6 @@ describe("camera-fly-to tool", () => {
         "Unknown error from Cesium",
       );
       expect(response.isError).toBe(true);
-    });
-
-    it("should set responseTime to 0 in error response", async () => {
-      const destination = { longitude: 0, latitude: 0, height: 0 };
-
-      vi.mocked(mockCommunicationServer.executeCommand).mockRejectedValue(
-        new Error("Test error"),
-      );
-
-      const response = await registeredHandler({ destination });
-
-      expect(response.structuredContent.stats.responseTime).toBe(0);
     });
 
     it("should include destination and orientation in error response", async () => {

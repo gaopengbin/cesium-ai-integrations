@@ -33,7 +33,6 @@ async function main() {
         mcpTransport: (process.env.MCP_TRANSPORT || "stdio") as
           | "stdio"
           | "streamable-http",
-        mcpTransportEndpoint: process.env.MCP_TRANSPORT_ENDPOINT,
       },
       communicationServer,
     );

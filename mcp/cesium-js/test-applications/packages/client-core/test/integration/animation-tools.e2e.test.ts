@@ -3,10 +3,6 @@
  *
  * Tests every animation MCP server tool through the full flow:
  *   Test → MCP transport → Animation MCP Server → WebSocket → Cesium viewer
- *
- * This file is transport-agnostic — it uses stdio by default, but can be
- * pointed at streamable-http via the MCP_TRANSPORT env var.  The focus here
- * is on *tool behaviour*, not transport mechanics.
  */
 
 import {
@@ -25,7 +21,6 @@ import type { CesiumViewer } from "../../src/types/cesium-types";
 import type { MCPCommand } from "../../src/types/mcp";
 import {
   StdioMCPClient,
-  HttpStreamableMCPClient,
   TestWSViewerClient,
   createTestViewer,
 } from "../helpers";
@@ -41,9 +36,6 @@ const ANIMATION_SERVER_DIR = path.resolve(
   __dirname,
   "../../../../../servers/animation-server",
 );
-
-// Transport selection via environment variable (default: stdio)
-const MCP_TRANSPORT = process.env.MCP_TRANSPORT || "stdio";
 
 /** All tool names the animation server is expected to register. */
 const ALL_ANIMATION_TOOLS = [
@@ -80,16 +72,6 @@ const SAMPLE_ROUTE = [
 ];
 
 function createMCPClient(): IMCPClient {
-  if (MCP_TRANSPORT === "streamable-http") {
-    console.log(`[Test] Using streamable-http transport`);
-    return new HttpStreamableMCPClient({
-      serverDir: ANIMATION_SERVER_DIR,
-      port: SERVER_PORT,
-      clientName: "animation-e2e-test",
-    });
-  }
-
-  console.log("[Test] Using stdio transport (spawning child process)");
   return new StdioMCPClient({
     serverDir: ANIMATION_SERVER_DIR,
     port: SERVER_PORT,
@@ -97,7 +79,7 @@ function createMCPClient(): IMCPClient {
   });
 }
 
-describe(`Animation Tools E2E [${MCP_TRANSPORT}]`, () => {
+describe("Animation Tools E2E", () => {
   let mcpClient: IMCPClient;
   let viewerClient: TestWSViewerClient;
   let viewer: CesiumViewer;

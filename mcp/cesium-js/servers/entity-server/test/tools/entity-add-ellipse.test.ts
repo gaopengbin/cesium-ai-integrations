@@ -41,10 +41,10 @@ describe("registerAddEllipseEntity", () => {
     );
   });
 
-  it("returns success response for valid ellipse entity", async () => {
+  it("handles basic success with default options", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
-      totalEntities: 1,
+      totalEntities: 4,
     });
 
     const response = await registeredHandler(validArgs);
@@ -52,31 +52,16 @@ describe("registerAddEllipseEntity", () => {
     expect(response.structuredContent.success).toBe(true);
     expect(response.structuredContent.message).toContain("Ellipse entity");
     expect(response.isError).toBe(false);
-  });
-
-  it("sends entity_add command with ellipse graphics", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
+    expect(response.structuredContent.entityName).toBe("Ellipse");
+    expect(response.structuredContent.message).toContain('"Ellipse"');
+    expect(response.structuredContent.position).toEqual(validArgs.position);
+    expect(response.structuredContent.stats?.totalEntities).toBe(4);
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.type).toBe("entity_add");
     expect(command.entity.ellipse).toEqual(validArgs.ellipse);
-  });
-
-  it("includes position in entity", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
-
-    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.entity.position).toEqual(validArgs.position);
+    expect(command.entity.id).toMatch(/^ellipse_/);
   });
 
   it("uses provided name", async () => {
@@ -94,16 +79,20 @@ describe("registerAddEllipseEntity", () => {
     expect(response.structuredContent.message).toContain("Coverage Zone");
   });
 
-  it("uses provided id", async () => {
+  it("handles success with provided id", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
       totalEntities: 1,
     });
 
-    await registeredHandler({ ...validArgs, id: "ellipse-001" });
+    const response = await registeredHandler({
+      ...validArgs,
+      id: "ellipse-42",
+    });
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.id).toBe("ellipse-001");
+    expect(command.entity.id).toBe("ellipse-42");
+    expect(response.structuredContent.entityId).toBe("ellipse-42");
   });
 
   it("returns error response when executeCommand rejects", async () => {
@@ -128,5 +117,20 @@ describe("registerAddEllipseEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+  });
+
+  it("forwards description to entity command", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      totalEntities: 1,
+    });
+
+    await registeredHandler({
+      ...validArgs,
+      description: "<p>An oval area</p>",
+    });
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command.entity.description).toBe("<p>An oval area</p>");
   });
 });

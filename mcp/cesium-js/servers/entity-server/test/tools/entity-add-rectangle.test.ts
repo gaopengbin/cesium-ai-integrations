@@ -47,10 +47,10 @@ describe("registerAddRectangleEntity", () => {
     );
   });
 
-  it("returns success response for valid rectangle entity", async () => {
+  it("handles basic success with default options", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
-      totalEntities: 1,
+      totalEntities: 11,
     });
 
     const response = await registeredHandler(validArgs);
@@ -58,32 +58,17 @@ describe("registerAddRectangleEntity", () => {
     expect(response.structuredContent.success).toBe(true);
     expect(response.structuredContent.message).toContain("Rectangle entity");
     expect(response.isError).toBe(false);
-  });
-
-  it("sends entity_add command with rectangle graphics", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
+    expect(response.structuredContent.entityName).toBe("Rectangle");
+    expect(response.structuredContent.message).toContain('"Rectangle"');
+    expect(response.structuredContent.message).toContain("40.0000");
+    expect(response.structuredContent.message).toContain("-105.0000");
+    expect(response.structuredContent.stats?.totalEntities).toBe(11);
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.type).toBe("entity_add");
     expect(command.entity.rectangle).toEqual(validArgs.rectangle);
-  });
-
-  it("includes computed center in success message", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    const response = await registeredHandler(validArgs);
-
-    // center lat = (39 + 41) / 2 = 40, center lon = (-106 + -104) / 2 = -105
-    expect(response.structuredContent.message).toContain("40.0000");
-    expect(response.structuredContent.message).toContain("-105.0000");
+    expect(command.entity.id).toMatch(/^rectangle_/);
+    expect(command.entity.position).toBeUndefined();
   });
 
   it("uses provided name", async () => {
@@ -101,16 +86,17 @@ describe("registerAddRectangleEntity", () => {
     expect(response.structuredContent.message).toContain("My Region");
   });
 
-  it("uses provided id", async () => {
+  it("handles success with provided id", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
       totalEntities: 1,
     });
 
-    await registeredHandler({ ...validArgs, id: "rect-001" });
+    const response = await registeredHandler({ ...validArgs, id: "rect-42" });
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.id).toBe("rect-001");
+    expect(command.entity.id).toBe("rect-42");
+    expect(response.structuredContent.entityId).toBe("rect-42");
   });
 
   it("returns error response when executeCommand rejects", async () => {
@@ -135,5 +121,17 @@ describe("registerAddRectangleEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+  });
+
+  it("forwards description to entity command", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      totalEntities: 1,
+    });
+
+    await registeredHandler({ ...validArgs, description: "<p>A region</p>" });
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command.entity.description).toBe("<p>A region</p>");
   });
 });

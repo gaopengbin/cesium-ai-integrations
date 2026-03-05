@@ -199,6 +199,32 @@ describe("TimeIntervalSchema", () => {
       false,
     );
   });
+
+  it("should reject invalid start date", () => {
+    expect(
+      TimeIntervalSchema.safeParse({
+        start: {
+          dayNumber: 2451545,
+        },
+        stop: julianDate,
+        isStartIncluded: false,
+        isStopIncluded: true,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("should reject invalid stop date", () => {
+    expect(
+      TimeIntervalSchema.safeParse({
+        start: julianDate,
+        stop: {
+          dayNumber: 2451545,
+        },
+        isStartIncluded: false,
+        isStopIncluded: true,
+      }).success,
+    ).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -231,6 +257,17 @@ describe("PositionSampleSchema", () => {
 
   it("should reject missing time", () => {
     expect(PositionSampleSchema.safeParse({ position }).success).toBe(false);
+  });
+
+  it("should reject position with invalid time", () => {
+    expect(
+      PositionSampleSchema.safeParse({
+        time: {
+          dayNumber: 2451545,
+        },
+        position: { ...position, height: 1000 },
+      }).success,
+    ).toBe(false);
   });
 });
 
@@ -386,6 +423,56 @@ describe("ClockSchema", () => {
         startTime: julianDate,
         stopTime: julianDate,
         currentTime: julianDate,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("should reject invalid startTime", () => {
+    expect(
+      ClockSchema.safeParse({
+        startTime: {
+          dayNumber: 2451545,
+        },
+        stopTime: julianDate,
+        currentTime: julianDate,
+        clockRange: "LOOP_STOP",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("should reject invalid clockRange", () => {
+    expect(
+      ClockSchema.safeParse({
+        startTime: julianDate,
+        stopTime: julianDate,
+        currentTime: julianDate,
+        clockRange: "INVALID_RANGE",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("should reject invalid stopTime", () => {
+    expect(
+      ClockSchema.safeParse({
+        startTime: julianDate,
+        stopTime: {
+          dayNumber: 2451545,
+        },
+        currentTime: julianDate,
+        clockRange: "LOOP_STOP",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("should reject invalid currentTime", () => {
+    expect(
+      ClockSchema.safeParse({
+        startTime: julianDate,
+        stopTime: julianDate,
+        currentTime: {
+          dayNumber: 2451545,
+        },
+        clockRange: "LOOP_STOP",
       }).success,
     ).toBe(false);
   });

@@ -3,10 +3,6 @@
  *
  * Tests every camera MCP server tool through the full flow:
  *   Test → MCP transport → Camera MCP Server → WebSocket → Cesium viewer
- *
- * This file is transport-agnostic — it uses stdio by default, but can be
- * pointed at streamable-http via the MCP_TRANSPORT env var.  The focus here
- * is on *tool behaviour*, not transport mechanics.
  */
 
 import {
@@ -42,9 +38,6 @@ const CAMERA_SERVER_DIR = path.resolve(
   "../../../../../servers/camera-server",
 );
 
-// Transport selection via environment variable (default: stdio)
-const MCP_TRANSPORT = process.env.MCP_TRANSPORT || "stdio";
-
 /** All tool names the camera server is expected to register. */
 const ALL_CAMERA_TOOLS = [
   "camera_fly_to",
@@ -57,16 +50,6 @@ const ALL_CAMERA_TOOLS = [
 ] as const;
 
 function createMCPClient(): IMCPClient {
-  if (MCP_TRANSPORT === "streamable-http") {
-    console.log(`[Test] Using streamable-http transport`);
-    return new HttpStreamableMCPClient({
-      serverDir: CAMERA_SERVER_DIR,
-      port: SERVER_PORT,
-      clientName: "camera-e2e-test",
-    });
-  }
-
-  console.log("[Test] Using stdio transport (spawning child process)");
   return new StdioMCPClient({
     serverDir: CAMERA_SERVER_DIR,
     port: SERVER_PORT,
@@ -74,7 +57,7 @@ function createMCPClient(): IMCPClient {
   });
 }
 
-describe(`Camera Tools E2E [${MCP_TRANSPORT}]`, () => {
+describe("Camera Tools E2E", () => {
   let mcpClient: IMCPClient;
   let viewerClient: TestWSViewerClient;
   let viewer: CesiumViewer;

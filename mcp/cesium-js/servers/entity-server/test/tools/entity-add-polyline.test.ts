@@ -46,10 +46,10 @@ describe("registerAddPolylineEntity", () => {
     );
   });
 
-  it("returns success response for valid polyline entity", async () => {
+  it("handles basic success with default options", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
-      totalEntities: 1,
+      totalEntities: 9,
     });
 
     const response = await registeredHandler(validArgs);
@@ -57,30 +57,16 @@ describe("registerAddPolylineEntity", () => {
     expect(response.structuredContent.success).toBe(true);
     expect(response.structuredContent.message).toContain("Polyline entity");
     expect(response.isError).toBe(false);
-  });
-
-  it("sends entity_add command with polyline graphics", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
+    expect(response.structuredContent.entityName).toBe("Polyline");
+    expect(response.structuredContent.message).toContain('"Polyline"');
+    expect(response.structuredContent.message).toContain("3");
+    expect(response.structuredContent.stats?.totalEntities).toBe(9);
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.type).toBe("entity_add");
     expect(command.entity.polyline).toEqual(validArgs.polyline);
-  });
-
-  it("includes point count in success message", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    const response = await registeredHandler(validArgs);
-
-    expect(response.structuredContent.message).toContain("3");
+    expect(command.entity.id).toMatch(/^polyline_/);
+    expect(command.entity.position).toBeUndefined();
   });
 
   it("uses provided name", async () => {
@@ -98,16 +84,20 @@ describe("registerAddPolylineEntity", () => {
     expect(response.structuredContent.message).toContain("My Route");
   });
 
-  it("uses provided id", async () => {
+  it("handles success with provided id", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
       totalEntities: 1,
     });
 
-    await registeredHandler({ ...validArgs, id: "line-001" });
+    const response = await registeredHandler({
+      ...validArgs,
+      id: "polyline-42",
+    });
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.id).toBe("line-001");
+    expect(command.entity.id).toBe("polyline-42");
+    expect(response.structuredContent.entityId).toBe("polyline-42");
   });
 
   it("passes width through polyline config", async () => {
@@ -146,5 +136,17 @@ describe("registerAddPolylineEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+  });
+
+  it("forwards description to entity command", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      totalEntities: 1,
+    });
+
+    await registeredHandler({ ...validArgs, description: "<p>A route</p>" });
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command.entity.description).toBe("<p>A route</p>");
   });
 });

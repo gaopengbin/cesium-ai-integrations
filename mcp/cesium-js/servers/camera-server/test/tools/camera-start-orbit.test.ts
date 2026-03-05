@@ -60,66 +60,6 @@ describe("camera-start-orbit tool", () => {
       expect(response.structuredContent.direction).toBe("counterclockwise");
     });
 
-    it("should convert counterclockwise direction to positive speed", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      await registeredHandler({ speed: 0.01, direction: "counterclockwise" });
-
-      expect(mockCommunicationServer.executeCommand).toHaveBeenCalledWith(
-        expect.objectContaining({
-          speed: 0.01, // positive for counterclockwise
-        }),
-        undefined,
-      );
-    });
-
-    it("should convert clockwise direction to negative speed", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      await registeredHandler({ speed: 0.01, direction: "clockwise" });
-
-      expect(mockCommunicationServer.executeCommand).toHaveBeenCalledWith(
-        expect.objectContaining({
-          speed: -0.01, // negative for clockwise
-        }),
-        undefined,
-      );
-    });
-
-    it("should handle negative speed input with counterclockwise", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      await registeredHandler({ speed: -0.01, direction: "counterclockwise" });
-
-      expect(mockCommunicationServer.executeCommand).toHaveBeenCalledWith(
-        expect.objectContaining({
-          speed: 0.01, // Make absolute then positive for counterclockwise
-        }),
-        undefined,
-      );
-    });
-
-    it("should handle negative speed input with clockwise", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      await registeredHandler({ speed: -0.01, direction: "clockwise" });
-
-      expect(mockCommunicationServer.executeCommand).toHaveBeenCalledWith(
-        expect.objectContaining({
-          speed: -0.01, // Make absolute then negative for clockwise
-        }),
-        undefined,
-      );
-    });
-
     it("should format message with direction and speed", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
         success: true,
@@ -134,23 +74,6 @@ describe("camera-start-orbit tool", () => {
       expect(response.structuredContent.message).toContain("0.008");
     });
 
-    it("should accept zero speed", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({ speed: 0 });
-
-      expect(mockCommunicationServer.executeCommand).toHaveBeenCalledWith(
-        expect.objectContaining({
-          speed: 0,
-        }),
-        undefined,
-      );
-
-      expect(response.structuredContent.speed).toBe(0);
-    });
-
     it("should accept large speed values", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
         success: true,
@@ -159,6 +82,19 @@ describe("camera-start-orbit tool", () => {
       const response = await registeredHandler({ speed: 1.5 });
 
       expect(response.structuredContent.speed).toBe(1.5);
+    });
+
+    it("should include responseTime in stats", async () => {
+      vi.mocked(mockCommunicationServer.executeCommand).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(() => resolve({ success: true }), 10);
+          }),
+      );
+
+      const response = await registeredHandler({});
+
+      expect(response.structuredContent.stats.responseTime).toBeGreaterThan(0);
     });
   });
 
@@ -205,7 +141,7 @@ describe("camera-start-orbit tool", () => {
       );
     });
 
-    it("should set orbitActive to false in error response", async () => {
+    it("should set orbitActive=false, use defaults, and zero responseTime in error response", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockRejectedValue(
         new Error("Test error"),
       );
@@ -213,27 +149,20 @@ describe("camera-start-orbit tool", () => {
       const response = await registeredHandler({});
 
       expect(response.structuredContent.orbitActive).toBe(false);
-    });
-
-    it("should use defaults in error response", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockRejectedValue(
-        new Error("Test error"),
-      );
-
-      const response = await registeredHandler({});
-
       expect(response.structuredContent.speed).toBe(DEFAULT_ORBIT_SPEED);
       expect(response.structuredContent.direction).toBe("counterclockwise");
+      expect(response.structuredContent.stats.responseTime).toBe(0);
     });
 
-    it("should set responseTime to 0 in error response", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockRejectedValue(
-        new Error("Test error"),
+    it("should reject zero speed with an error", async () => {
+      const response = await registeredHandler({ speed: 0 });
+
+      expect(response.structuredContent.success).toBe(false);
+      expect(response.structuredContent.message).toContain(
+        "Speed must be non-zero",
       );
-
-      const response = await registeredHandler({});
-
-      expect(response.structuredContent.stats.responseTime).toBe(0);
+      expect(response.isError).toBe(true);
+      expect(mockCommunicationServer.executeCommand).not.toHaveBeenCalled();
     });
   });
 

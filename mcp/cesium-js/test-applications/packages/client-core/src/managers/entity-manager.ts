@@ -21,6 +21,10 @@ import type {
   CorridorOptions,
   Position,
   EntityInputData,
+  EntityAddResult,
+  EntityRemoveResult,
+  EntityRemoveMultipleResult,
+  EntityListResult,
 } from "../types/mcp.js";
 
 import { cartesian3ToPosition } from "../shared/cesium-utils.js";
@@ -64,7 +68,7 @@ class CesiumEntityManager implements ManagerInterface {
     latitude: number,
     height: number = 0,
     options: PointOptions = {},
-  ): Promise<MCPCommandResult> {
+  ): Promise<EntityAddResult> {
     return new Promise((resolve) => {
       try {
         const entity = addPointEntity(
@@ -104,7 +108,7 @@ class CesiumEntityManager implements ManagerInterface {
     height: number = 0,
     text: string,
     options: LabelOptions = {},
-  ): Promise<MCPCommandResult> {
+  ): Promise<EntityAddResult> {
     return new Promise((resolve) => {
       try {
         const entity = addLabelEntity(
@@ -142,7 +146,7 @@ class CesiumEntityManager implements ManagerInterface {
   private async addPolygon(
     coordinates: Position[],
     options: PolygonOptions = {},
-  ): Promise<MCPCommandResult> {
+  ): Promise<EntityAddResult> {
     return new Promise((resolve) => {
       try {
         const entity = addPolygonEntity(this.viewer, coordinates, {
@@ -179,7 +183,7 @@ class CesiumEntityManager implements ManagerInterface {
   private async addPolyline(
     coordinates: Position[],
     options: PolylineOptions = {},
-  ): Promise<MCPCommandResult> {
+  ): Promise<EntityAddResult> {
     return new Promise((resolve) => {
       try {
         const entity = addPolylineEntity(this.viewer, coordinates, {
@@ -216,7 +220,7 @@ class CesiumEntityManager implements ManagerInterface {
     height: number = 0,
     imageUrl: string,
     options: BillboardOptions = {},
-  ): Promise<MCPCommandResult> {
+  ): Promise<EntityAddResult> {
     return new Promise((resolve) => {
       try {
         const entity = addBillboardEntity(
@@ -258,7 +262,7 @@ class CesiumEntityManager implements ManagerInterface {
     height: number = 0,
     modelUri: string,
     options: ModelOptions = {},
-  ): Promise<MCPCommandResult> {
+  ): Promise<EntityAddResult> {
     return new Promise((resolve) => {
       try {
         const entity = addModelEntity(
@@ -303,7 +307,7 @@ class CesiumEntityManager implements ManagerInterface {
     semiMajorAxis: number,
     semiMinorAxis: number,
     options: EllipseOptions = {},
-  ): Promise<MCPCommandResult> {
+  ): Promise<EntityAddResult> {
     return new Promise((resolve) => {
       try {
         const entity = addEllipseEntity(
@@ -347,7 +351,7 @@ class CesiumEntityManager implements ManagerInterface {
   private async addRectangle(
     coordinates: { west: number; south: number; east: number; north: number },
     options: RectangleOptions = {},
-  ): Promise<MCPCommandResult> {
+  ): Promise<EntityAddResult> {
     return new Promise((resolve) => {
       try {
         const entity = addRectangleEntity(this.viewer, coordinates, {
@@ -385,7 +389,7 @@ class CesiumEntityManager implements ManagerInterface {
   private async addWall(
     positions: Position[],
     options: WallOptions = {},
-  ): Promise<MCPCommandResult> {
+  ): Promise<EntityAddResult> {
     return new Promise((resolve) => {
       try {
         const entity = addWallEntity(this.viewer, positions, {
@@ -426,7 +430,7 @@ class CesiumEntityManager implements ManagerInterface {
     topRadius: number,
     bottomRadius: number,
     options: CylinderOptions = {},
-  ): Promise<MCPCommandResult> {
+  ): Promise<EntityAddResult> {
     return new Promise((resolve) => {
       try {
         const entity = addCylinderEntity(
@@ -471,7 +475,7 @@ class CesiumEntityManager implements ManagerInterface {
     height: number = 0,
     dimensions: { x: number; y: number; z: number },
     options: BoxOptions = {},
-  ): Promise<MCPCommandResult> {
+  ): Promise<EntityAddResult> {
     return new Promise((resolve) => {
       try {
         const entity = addBoxEntity(
@@ -512,7 +516,7 @@ class CesiumEntityManager implements ManagerInterface {
     positions: Position[],
     width: number,
     options: CorridorOptions = {},
-  ): Promise<MCPCommandResult> {
+  ): Promise<EntityAddResult> {
     return new Promise((resolve) => {
       try {
         const entity = addCorridorEntity(this.viewer, positions, width, {
@@ -547,7 +551,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * Remove an entity by ID
    */
-  private async removeEntity(entityId: string): Promise<MCPCommandResult> {
+  private async removeEntity(entityId: string): Promise<EntityRemoveResult> {
     return new Promise((resolve) => {
       try {
         const entity = this.viewer.entities.getById(entityId);
@@ -578,7 +582,7 @@ class CesiumEntityManager implements ManagerInterface {
    */
   private async removeEntitiesByName(
     namePattern: string,
-  ): Promise<MCPCommandResult> {
+  ): Promise<EntityRemoveMultipleResult> {
     return new Promise((resolve) => {
       try {
         const entities = this.viewer.entities.values;
@@ -610,7 +614,7 @@ class CesiumEntityManager implements ManagerInterface {
   /**
    * List all entities with detailed information
    */
-  private async listEntities(): Promise<MCPCommandResult> {
+  private async listEntities(): Promise<EntityListResult> {
     return new Promise((resolve) => {
       try {
         const entities = [];
@@ -655,6 +659,367 @@ class CesiumEntityManager implements ManagerInterface {
           entities: [],
         });
       }
+    });
+  }
+
+  /**
+   * Helper functions for handling specific entity types
+   */
+  private async handlePointEntity(
+    entity: EntityInputData,
+  ): Promise<EntityAddResult> {
+    if (!entity.position) {
+      return {
+        success: false,
+        error: "Position is required for point entity",
+      };
+    }
+    return await this.addPoint(
+      entity.position.longitude,
+      entity.position.latitude,
+      entity.position.height || 0,
+      {
+        id: entity.id,
+        name: entity.name,
+        description: entity.description,
+        pixelSize: entity.point?.pixelSize,
+        color: entity.point?.color,
+        outlineColor: entity.point?.outlineColor,
+        outlineWidth: entity.point?.outlineWidth,
+      },
+    );
+  }
+
+  private async handleLabelEntity(
+    entity: EntityInputData,
+  ): Promise<EntityAddResult> {
+    if (!entity.position) {
+      return {
+        success: false,
+        error: "Position is required for label entity",
+      };
+    }
+    const labelText = entity.label?.text || entity.text;
+    if (!labelText) {
+      return { success: false, error: "Text is required for label entity" };
+    }
+    return await this.addLabel(
+      entity.position.longitude,
+      entity.position.latitude,
+      entity.position.height || 0,
+      labelText,
+      {
+        id: entity.id,
+        name: entity.name,
+        description: entity.description,
+        font: entity.label?.font,
+        fillColor: entity.label?.fillColor,
+        outlineColor: entity.label?.outlineColor,
+        outlineWidth: entity.label?.outlineWidth,
+        style: entity.label?.style,
+        scale: entity.label?.scale,
+        pixelOffset: entity.label?.pixelOffset,
+      },
+    );
+  }
+
+  private async handlePolygonEntity(
+    entity: EntityInputData,
+  ): Promise<EntityAddResult> {
+    const coordinates =
+      entity.polygon?.hierarchy || entity.positions || entity.coordinates;
+    if (!coordinates) {
+      return {
+        success: false,
+        error: "Coordinates are required for polygon entity",
+      };
+    }
+    return await this.addPolygon(coordinates, {
+      id: entity.id,
+      name: entity.name,
+      description: entity.description,
+      height: entity.height || entity.polygon?.height,
+      extrudedHeight: entity.extrudedHeight || entity.polygon?.extrudedHeight,
+      material: entity.material || entity.polygon?.material,
+      outline:
+        entity.outline !== undefined ? entity.outline : entity.polygon?.outline,
+      outlineColor: entity.outlineColor || entity.polygon?.outlineColor,
+    });
+  }
+
+  private async handlePolylineEntity(
+    entity: EntityInputData,
+  ): Promise<EntityAddResult> {
+    const coordinates = entity.polyline?.positions || entity.coordinates;
+    if (!coordinates) {
+      return {
+        success: false,
+        error: "Coordinates are required for polyline entity",
+      };
+    }
+    return await this.addPolyline(coordinates, {
+      id: entity.id,
+      name: entity.name,
+      description: entity.description,
+      width: entity.polyline?.width,
+      material: entity.polyline?.material,
+      clampToGround: entity.polyline?.clampToGround,
+    });
+  }
+
+  private async handleBillboardEntity(
+    entity: EntityInputData,
+  ): Promise<EntityAddResult> {
+    if (!entity.position) {
+      return {
+        success: false,
+        error: "Position is required for billboard entity",
+      };
+    }
+    const imageUrl = entity.billboard?.image || entity.imageUrl;
+    if (!imageUrl) {
+      return {
+        success: false,
+        error: "Image URL is required for billboard entity",
+      };
+    }
+    return await this.addBillboard(
+      entity.position.longitude,
+      entity.position.latitude,
+      entity.position.height || 0,
+      imageUrl,
+      {
+        id: entity.id,
+        name: entity.name,
+        description: entity.description,
+        width: entity.billboard?.width,
+        height: entity.billboard?.height,
+        scale: entity.billboard?.scale,
+        color: entity.billboard?.color,
+      },
+    );
+  }
+
+  private async handleModelEntity(
+    entity: EntityInputData,
+  ): Promise<EntityAddResult> {
+    if (!entity.position) {
+      return {
+        success: false,
+        error: "Position is required for model entity",
+      };
+    }
+    const modelUri = entity.model?.uri;
+    if (!modelUri) {
+      return {
+        success: false,
+        error: "Model URI is required for model entity",
+      };
+    }
+    return await this.addModel(
+      entity.position.longitude,
+      entity.position.latitude,
+      entity.position.height || 0,
+      modelUri,
+      {
+        id: entity.id,
+        name: entity.name,
+        description: entity.description,
+        orientation: entity.orientation,
+        scale: entity.model?.scale,
+        minimumPixelSize: entity.model?.minimumPixelSize,
+        maximumScale: entity.model?.maximumScale,
+      },
+    );
+  }
+
+  private async handleBoxEntity(
+    entity: EntityInputData,
+  ): Promise<EntityAddResult> {
+    if (!entity.position) {
+      return {
+        success: false,
+        error: "Position is required for box entity",
+      };
+    }
+    const dimensions = entity.box?.dimensions;
+    if (!dimensions) {
+      return {
+        success: false,
+        error: "Dimensions are required for box entity",
+      };
+    }
+    return await this.addBox(
+      entity.position.longitude,
+      entity.position.latitude,
+      entity.position.height || 0,
+      dimensions,
+      {
+        id: entity.id,
+        name: entity.name,
+        description: entity.description,
+        material: entity.box?.material,
+        fillColor: entity.box?.fillColor,
+        outline: entity.box?.outline,
+        outlineColor: entity.box?.outlineColor,
+        orientation: entity.orientation,
+      },
+    );
+  }
+
+  private async handleCorridorEntity(
+    entity: EntityInputData,
+  ): Promise<EntityAddResult> {
+    const positions = entity.corridor?.positions;
+    const width = entity.corridor?.width;
+    if (!positions || !width) {
+      return {
+        success: false,
+        error: "Positions and width are required for corridor entity",
+      };
+    }
+    return await this.addCorridor(positions, width, {
+      id: entity.id,
+      name: entity.name,
+      description: entity.description,
+      material: entity.corridor?.material,
+      fillColor: entity.corridor?.fillColor,
+      outline: entity.corridor?.outline,
+      outlineColor: entity.corridor?.outlineColor,
+      cornerType: entity.corridor?.cornerType,
+      height: entity.corridor?.height,
+      extrudedHeight: entity.corridor?.extrudedHeight,
+    });
+  }
+
+  private async handleCylinderEntity(
+    entity: EntityInputData,
+  ): Promise<EntityAddResult> {
+    if (!entity.position) {
+      return {
+        success: false,
+        error: "Position is required for cylinder entity",
+      };
+    }
+    const length = entity.cylinder?.length;
+    const topRadius = entity.cylinder?.topRadius;
+    const bottomRadius = entity.cylinder?.bottomRadius;
+    if (
+      length === undefined ||
+      topRadius === undefined ||
+      bottomRadius === undefined
+    ) {
+      return {
+        success: false,
+        error:
+          "Length, topRadius, and bottomRadius are required for cylinder entity",
+      };
+    }
+    return await this.addCylinder(
+      entity.position.longitude,
+      entity.position.latitude,
+      entity.position.height || 0,
+      length,
+      topRadius,
+      bottomRadius,
+      {
+        id: entity.id,
+        name: entity.name,
+        description: entity.description,
+        material: entity.cylinder?.material,
+        fillColor: entity.cylinder?.fillColor,
+        outline: entity.cylinder?.outline,
+        outlineColor: entity.cylinder?.outlineColor,
+        orientation: entity.orientation,
+      },
+    );
+  }
+
+  private async handleEllipseEntity(
+    entity: EntityInputData,
+  ): Promise<EntityAddResult> {
+    if (!entity.position) {
+      return {
+        success: false,
+        error: "Position is required for ellipse entity",
+      };
+    }
+    const semiMajorAxis = entity.ellipse?.semiMajorAxis;
+    const semiMinorAxis = entity.ellipse?.semiMinorAxis;
+    if (semiMajorAxis === undefined || semiMinorAxis === undefined) {
+      return {
+        success: false,
+        error:
+          "semiMajorAxis and semiMinorAxis are required for ellipse entity",
+      };
+    }
+    return await this.addEllipse(
+      entity.position.longitude,
+      entity.position.latitude,
+      entity.position.height || 0,
+      semiMajorAxis,
+      semiMinorAxis,
+      {
+        id: entity.id,
+        name: entity.name,
+        description: entity.description,
+        material: entity.ellipse?.material,
+        fillColor: entity.ellipse?.fillColor,
+        fillOpacity: entity.ellipse?.fillOpacity,
+        outline: entity.ellipse?.outline,
+        outlineColor: entity.ellipse?.outlineColor,
+        height: entity.ellipse?.height,
+        extrudedHeight: entity.ellipse?.extrudedHeight,
+        rotation: entity.ellipse?.rotation,
+      },
+    );
+  }
+
+  private async handleRectangleEntity(
+    entity: EntityInputData,
+  ): Promise<EntityAddResult> {
+    const coordinates = entity.rectangle?.coordinates;
+    if (!coordinates) {
+      return {
+        success: false,
+        error: "Coordinates are required for rectangle entity",
+      };
+    }
+    return await this.addRectangle(coordinates, {
+      id: entity.id,
+      name: entity.name,
+      description: entity.description,
+      material: entity.rectangle?.material,
+      fillColor: entity.rectangle?.fillColor,
+      fillOpacity: entity.rectangle?.fillOpacity,
+      outline: entity.rectangle?.outline,
+      outlineColor: entity.rectangle?.outlineColor,
+      height: entity.rectangle?.height,
+      extrudedHeight: entity.rectangle?.extrudedHeight,
+      rotation: entity.rectangle?.rotation,
+    });
+  }
+
+  private async handleWallEntity(
+    entity: EntityInputData,
+  ): Promise<EntityAddResult> {
+    const positions = entity.wall?.positions;
+    if (!positions) {
+      return {
+        success: false,
+        error: "Positions are required for wall entity",
+      };
+    }
+    return await this.addWall(positions, {
+      id: entity.id,
+      name: entity.name,
+      description: entity.description,
+      minimumHeights: entity.wall?.minimumHeights,
+      maximumHeights: entity.wall?.maximumHeights,
+      material: entity.wall?.material,
+      fillColor: entity.wall?.fillColor,
+      outline: entity.wall?.outline,
+      outlineColor: entity.wall?.outlineColor,
     });
   }
 
@@ -706,7 +1071,7 @@ class CesiumEntityManager implements ManagerInterface {
    */
   private async handleEntityAdd(
     command: Record<string, unknown>,
-  ): Promise<MCPCommandResult> {
+  ): Promise<EntityAddResult> {
     const entity =
       (command.entity as EntityInputData) || (command as EntityInputData);
 
@@ -741,329 +1106,29 @@ class CesiumEntityManager implements ManagerInterface {
 
     switch (entityType) {
       case "point":
-        if (!entity.position) {
-          return {
-            success: false,
-            error: "Position is required for point entity",
-          };
-        }
-        return await this.addPoint(
-          entity.position.longitude,
-          entity.position.latitude,
-          entity.position.height || 0,
-          {
-            id: entity.id,
-            name: entity.name,
-            description: entity.description,
-            pixelSize: entity.point?.pixelSize,
-            color: entity.point?.color,
-            outlineColor: entity.point?.outlineColor,
-            outlineWidth: entity.point?.outlineWidth,
-          },
-        );
-      case "label": {
-        if (!entity.position) {
-          return {
-            success: false,
-            error: "Position is required for label entity",
-          };
-        }
-        const labelText = entity.label?.text || entity.text;
-        if (!labelText) {
-          return { success: false, error: "Text is required for label entity" };
-        }
-        return await this.addLabel(
-          entity.position.longitude,
-          entity.position.latitude,
-          entity.position.height || 0,
-          labelText,
-          {
-            id: entity.id,
-            name: entity.name,
-            description: entity.description,
-            font: entity.label?.font,
-            fillColor: entity.label?.fillColor,
-            outlineColor: entity.label?.outlineColor,
-            outlineWidth: entity.label?.outlineWidth,
-            style: entity.label?.style,
-            scale: entity.label?.scale,
-            pixelOffset: entity.label?.pixelOffset,
-          },
-        );
-      }
-      case "polygon": {
-        const coordinates =
-          entity.polygon?.hierarchy || entity.positions || entity.coordinates;
-        if (!coordinates) {
-          return {
-            success: false,
-            error: "Coordinates are required for polygon entity",
-          };
-        }
-        return await this.addPolygon(coordinates, {
-          id: entity.id,
-          name: entity.name,
-          description: entity.description,
-          height: entity.height || entity.polygon?.height,
-          extrudedHeight:
-            entity.extrudedHeight || entity.polygon?.extrudedHeight,
-          material: entity.material || entity.polygon?.material,
-          outline:
-            entity.outline !== undefined
-              ? entity.outline
-              : entity.polygon?.outline,
-          outlineColor: entity.outlineColor || entity.polygon?.outlineColor,
-        });
-      }
-      case "polyline": {
-        const coordinates = entity.polyline?.positions || entity.coordinates;
-        if (!coordinates) {
-          return {
-            success: false,
-            error: "Coordinates are required for polyline entity",
-          };
-        }
-        return await this.addPolyline(coordinates, {
-          id: entity.id,
-          name: entity.name,
-          description: entity.description,
-          width: entity.polyline?.width,
-          material: entity.polyline?.material,
-          clampToGround: entity.polyline?.clampToGround,
-        });
-      }
-      case "billboard": {
-        if (!entity.position) {
-          return {
-            success: false,
-            error: "Position is required for billboard entity",
-          };
-        }
-        const imageUrl = entity.billboard?.image || entity.imageUrl;
-        if (!imageUrl) {
-          return {
-            success: false,
-            error: "Image URL is required for billboard entity",
-          };
-        }
-        return await this.addBillboard(
-          entity.position.longitude,
-          entity.position.latitude,
-          entity.position.height || 0,
-          imageUrl,
-          {
-            id: entity.id,
-            name: entity.name,
-            description: entity.description,
-            width: entity.billboard?.width,
-            height: entity.billboard?.height,
-            scale: entity.billboard?.scale,
-            color: entity.billboard?.color,
-          },
-        );
-      }
-      case "model": {
-        if (!entity.position) {
-          return {
-            success: false,
-            error: "Position is required for model entity",
-          };
-        }
-        const modelUri = entity.model?.uri;
-        if (!modelUri) {
-          return {
-            success: false,
-            error: "Model URI is required for model entity",
-          };
-        }
-        return await this.addModel(
-          entity.position.longitude,
-          entity.position.latitude,
-          entity.position.height || 0,
-          modelUri,
-          {
-            id: entity.id,
-            name: entity.name,
-            description: entity.description,
-            orientation: entity.orientation,
-            scale: entity.model?.scale,
-            minimumPixelSize: entity.model?.minimumPixelSize,
-            maximumScale: entity.model?.maximumScale,
-          },
-        );
-      }
-      case "box": {
-        if (!entity.position) {
-          return {
-            success: false,
-            error: "Position is required for box entity",
-          };
-        }
-        const dimensions = entity.box?.dimensions;
-        if (!dimensions) {
-          return {
-            success: false,
-            error: "Dimensions are required for box entity",
-          };
-        }
-        return await this.addBox(
-          entity.position.longitude,
-          entity.position.latitude,
-          entity.position.height || 0,
-          dimensions,
-          {
-            id: entity.id,
-            name: entity.name,
-            description: entity.description,
-            material: entity.box?.material,
-            fillColor: entity.box?.fillColor,
-            outline: entity.box?.outline,
-            outlineColor: entity.box?.outlineColor,
-            orientation: entity.orientation,
-          },
-        );
-      }
-      case "corridor": {
-        const positions = entity.corridor?.positions;
-        const width = entity.corridor?.width;
-        if (!positions || !width) {
-          return {
-            success: false,
-            error: "Positions and width are required for corridor entity",
-          };
-        }
-        return await this.addCorridor(positions, width, {
-          id: entity.id,
-          name: entity.name,
-          description: entity.description,
-          material: entity.corridor?.material,
-          fillColor: entity.corridor?.fillColor,
-          outline: entity.corridor?.outline,
-          outlineColor: entity.corridor?.outlineColor,
-          cornerType: entity.corridor?.cornerType,
-          height: entity.corridor?.height,
-          extrudedHeight: entity.corridor?.extrudedHeight,
-        });
-      }
-      case "cylinder": {
-        if (!entity.position) {
-          return {
-            success: false,
-            error: "Position is required for cylinder entity",
-          };
-        }
-        const length = entity.cylinder?.length;
-        const topRadius = entity.cylinder?.topRadius;
-        const bottomRadius = entity.cylinder?.bottomRadius;
-        if (
-          length === undefined ||
-          topRadius === undefined ||
-          bottomRadius === undefined
-        ) {
-          return {
-            success: false,
-            error:
-              "Length, topRadius, and bottomRadius are required for cylinder entity",
-          };
-        }
-        return await this.addCylinder(
-          entity.position.longitude,
-          entity.position.latitude,
-          entity.position.height || 0,
-          length,
-          topRadius,
-          bottomRadius,
-          {
-            id: entity.id,
-            name: entity.name,
-            description: entity.description,
-            material: entity.cylinder?.material,
-            fillColor: entity.cylinder?.fillColor,
-            outline: entity.cylinder?.outline,
-            outlineColor: entity.cylinder?.outlineColor,
-            orientation: entity.orientation,
-          },
-        );
-      }
-      case "ellipse": {
-        if (!entity.position) {
-          return {
-            success: false,
-            error: "Position is required for ellipse entity",
-          };
-        }
-        const semiMajorAxis = entity.ellipse?.semiMajorAxis;
-        const semiMinorAxis = entity.ellipse?.semiMinorAxis;
-        if (semiMajorAxis === undefined || semiMinorAxis === undefined) {
-          return {
-            success: false,
-            error:
-              "semiMajorAxis and semiMinorAxis are required for ellipse entity",
-          };
-        }
-        return await this.addEllipse(
-          entity.position.longitude,
-          entity.position.latitude,
-          entity.position.height || 0,
-          semiMajorAxis,
-          semiMinorAxis,
-          {
-            id: entity.id,
-            name: entity.name,
-            description: entity.description,
-            material: entity.ellipse?.material,
-            fillColor: entity.ellipse?.fillColor,
-            fillOpacity: entity.ellipse?.fillOpacity,
-            outline: entity.ellipse?.outline,
-            outlineColor: entity.ellipse?.outlineColor,
-            height: entity.ellipse?.height,
-            extrudedHeight: entity.ellipse?.extrudedHeight,
-            rotation: entity.ellipse?.rotation,
-          },
-        );
-      }
-      case "rectangle": {
-        const coordinates = entity.rectangle?.coordinates;
-        if (!coordinates) {
-          return {
-            success: false,
-            error: "Coordinates are required for rectangle entity",
-          };
-        }
-        return await this.addRectangle(coordinates, {
-          id: entity.id,
-          name: entity.name,
-          description: entity.description,
-          material: entity.rectangle?.material,
-          fillColor: entity.rectangle?.fillColor,
-          fillOpacity: entity.rectangle?.fillOpacity,
-          outline: entity.rectangle?.outline,
-          outlineColor: entity.rectangle?.outlineColor,
-          height: entity.rectangle?.height,
-          extrudedHeight: entity.rectangle?.extrudedHeight,
-          rotation: entity.rectangle?.rotation,
-        });
-      }
-      case "wall": {
-        const positions = entity.wall?.positions;
-        if (!positions) {
-          return {
-            success: false,
-            error: "Positions are required for wall entity",
-          };
-        }
-        return await this.addWall(positions, {
-          id: entity.id,
-          name: entity.name,
-          description: entity.description,
-          minimumHeights: entity.wall?.minimumHeights,
-          maximumHeights: entity.wall?.maximumHeights,
-          material: entity.wall?.material,
-          fillColor: entity.wall?.fillColor,
-          outline: entity.wall?.outline,
-          outlineColor: entity.wall?.outlineColor,
-        });
-      }
+        return await this.handlePointEntity(entity);
+      case "label":
+        return await this.handleLabelEntity(entity);
+      case "polygon":
+        return await this.handlePolygonEntity(entity);
+      case "polyline":
+        return await this.handlePolylineEntity(entity);
+      case "billboard":
+        return await this.handleBillboardEntity(entity);
+      case "model":
+        return await this.handleModelEntity(entity);
+      case "box":
+        return await this.handleBoxEntity(entity);
+      case "corridor":
+        return await this.handleCorridorEntity(entity);
+      case "cylinder":
+        return await this.handleCylinderEntity(entity);
+      case "ellipse":
+        return await this.handleEllipseEntity(entity);
+      case "rectangle":
+        return await this.handleRectangleEntity(entity);
+      case "wall":
+        return await this.handleWallEntity(entity);
       default:
         return {
           success: false,

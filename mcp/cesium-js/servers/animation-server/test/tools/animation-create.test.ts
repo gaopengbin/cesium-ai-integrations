@@ -70,7 +70,7 @@ describe("animation_create tool", () => {
   });
 
   describe("Happy paths", () => {
-    it("should create animation with minimal valid input", async () => {
+    it("should create animation with minimal valid input and return correct response", async () => {
       vi.mocked(createAnimation).mockResolvedValue({
         success: true,
         animationId: "anim-generated-001",
@@ -92,24 +92,11 @@ describe("animation_create tool", () => {
       );
       expect(response.structuredContent.success).toBe(true);
       expect(response.structuredContent.animationId).toBe("anim-generated-001");
-    });
-
-    it("should return correct start and stop times", async () => {
-      vi.mocked(createAnimation).mockResolvedValue({
-        success: true,
-        animationId: "anim-001",
-        startTime: "2024-01-01T00:00:00Z",
-        stopTime: "2024-01-01T01:00:00Z",
-        modelPreset: "cesium_man",
-        responseTime: 30,
-      });
-
-      const response = await registeredHandler({
-        positionSamples: [minSample, maxSample],
-      });
-
       expect(response.structuredContent.startTime).toBe("2024-01-01T00:00:00Z");
       expect(response.structuredContent.stopTime).toBe("2024-01-01T01:00:00Z");
+      expect(response.structuredContent.message).toContain(
+        "2 position samples",
+      );
     });
 
     it("should pass modelPreset to createAnimation", async () => {
@@ -130,25 +117,6 @@ describe("animation_create tool", () => {
       expect(createAnimation).toHaveBeenCalledWith(
         mockCommunicationServer,
         expect.objectContaining({ modelPreset: "cesium_air" }),
-      );
-    });
-
-    it("should include sample count in success message", async () => {
-      vi.mocked(createAnimation).mockResolvedValue({
-        success: true,
-        animationId: "anim-001",
-        startTime: "2024-01-01T00:00:00Z",
-        stopTime: "2024-01-01T01:00:00Z",
-        modelPreset: "cesium_man",
-        responseTime: 20,
-      });
-
-      const response = await registeredHandler({
-        positionSamples: [minSample, maxSample],
-      });
-
-      expect(response.structuredContent.message).toContain(
-        "2 position samples",
       );
     });
 

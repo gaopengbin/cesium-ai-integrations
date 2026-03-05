@@ -47,10 +47,10 @@ describe("registerAddPolygonEntity", () => {
     );
   });
 
-  it("returns success response for valid polygon entity", async () => {
+  it("handles basic success with default options", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
-      totalEntities: 1,
+      totalEntities: 8,
     });
 
     const response = await registeredHandler(validArgs);
@@ -58,30 +58,16 @@ describe("registerAddPolygonEntity", () => {
     expect(response.structuredContent.success).toBe(true);
     expect(response.structuredContent.message).toContain("Polygon entity");
     expect(response.isError).toBe(false);
-  });
-
-  it("sends entity_add command with polygon graphics", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
+    expect(response.structuredContent.entityName).toBe("Polygon");
+    expect(response.structuredContent.message).toContain('"Polygon"');
+    expect(response.structuredContent.message).toContain("4");
+    expect(response.structuredContent.stats?.totalEntities).toBe(8);
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.type).toBe("entity_add");
     expect(command.entity.polygon).toEqual(validArgs.polygon);
-  });
-
-  it("includes vertex count in success message", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    const response = await registeredHandler(validArgs);
-
-    expect(response.structuredContent.message).toContain("4");
+    expect(command.entity.id).toMatch(/^polygon_/);
+    expect(command.entity.position).toBeUndefined();
   });
 
   it("uses provided name", async () => {
@@ -96,28 +82,20 @@ describe("registerAddPolygonEntity", () => {
     expect(response.structuredContent.message).toContain("My Zone");
   });
 
-  it("uses provided id", async () => {
+  it("handles success with provided id", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
       totalEntities: 1,
     });
 
-    await registeredHandler({ ...validArgs, id: "poly-001" });
-
-    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.id).toBe("poly-001");
-  });
-
-  it("does not include a top-level position property", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
+    const response = await registeredHandler({
+      ...validArgs,
+      id: "polygon-42",
     });
 
-    await registeredHandler(validArgs);
-
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.position).toBeUndefined();
+    expect(command.entity.id).toBe("polygon-42");
+    expect(response.structuredContent.entityId).toBe("polygon-42");
   });
 
   it("returns error response when executeCommand rejects", async () => {
@@ -142,5 +120,17 @@ describe("registerAddPolygonEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+  });
+
+  it("forwards description to entity command", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      totalEntities: 1,
+    });
+
+    await registeredHandler({ ...validArgs, description: "<p>An area</p>" });
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command.entity.description).toBe("<p>An area</p>");
   });
 });

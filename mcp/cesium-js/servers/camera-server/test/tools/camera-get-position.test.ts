@@ -253,25 +253,7 @@ describe("camera-get-position tool", () => {
       });
       expect(response.structuredContent.viewRectangle).toBeNull();
       expect(response.structuredContent.altitude).toBe(0);
-    });
-
-    it("should set responseTime to 0 in error response", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockRejectedValue(
-        new Error("Test error"),
-      );
-
-      const response = await registeredHandler();
-
       expect(response.structuredContent.stats.responseTime).toBe(0);
-    });
-
-    it("should include valid timestamp even in error response", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockRejectedValue(
-        new Error("Test error"),
-      );
-
-      const response = await registeredHandler();
-
       expect(response.structuredContent.timestamp).toMatch(
         /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
       );

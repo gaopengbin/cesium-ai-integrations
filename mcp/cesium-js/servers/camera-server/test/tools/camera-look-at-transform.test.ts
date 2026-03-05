@@ -109,6 +109,21 @@ describe("camera-look-at-transform tool", () => {
 
       expect(response.structuredContent.offset.range).toBe(0);
     });
+
+    it("should include responseTime in stats", async () => {
+      const target = { longitude: 0, latitude: 0, height: 0 };
+
+      vi.mocked(mockCommunicationServer.executeCommand).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(() => resolve({ success: true }), 10);
+          }),
+      );
+
+      const response = await registeredHandler({ target });
+
+      expect(response.structuredContent.stats.responseTime).toBeGreaterThan(0);
+    });
   });
 
   describe("Unhappy paths", () => {
@@ -159,19 +174,7 @@ describe("camera-look-at-transform tool", () => {
       );
     });
 
-    it("should set responseTime to 0 in error response", async () => {
-      const target = { longitude: 0, latitude: 0, height: 0 };
-
-      vi.mocked(mockCommunicationServer.executeCommand).mockRejectedValue(
-        new Error("Test error"),
-      );
-
-      const response = await registeredHandler({ target });
-
-      expect(response.structuredContent.stats.responseTime).toBe(0);
-    });
-
-    it("should include target and offset in error response", async () => {
+    it("should use DEFAULT_LOOK_AT_OFFSET and zero responseTime in error when offset not provided", async () => {
       const target = { longitude: -105, latitude: 39, height: 1609 };
       const offset = { heading: 90, pitch: -45, range: 3000 };
 
@@ -195,6 +198,7 @@ describe("camera-look-at-transform tool", () => {
       const response = await registeredHandler({ target });
 
       expect(response.structuredContent.offset).toEqual(DEFAULT_LOOK_AT_OFFSET);
+      expect(response.structuredContent.stats.responseTime).toBe(0);
     });
   });
 });

@@ -12,6 +12,7 @@
     "build:animation": "pnpm --filter @cesium-mcp/animation-server build",
     "build:cesium-js": "pnpm --filter @cesium-mcp/cesium-js build",
     "dev:camera": "pnpm --filter @cesium-mcp/camera-server dev",
+    "dev:entity": "pnpm --filter @cesium-mcp/entity-server dev",
     "dev:animation": "pnpm --filter @cesium-mcp/animation-server dev",
     "start:web": "pnpm --filter @cesium-mcp/cesium-js start:web",
     "clean": "pnpm -r run clean",
@@ -46,7 +47,8 @@
       "eslint>ajv": "^6.12.6",
       "@eslint/eslintrc>ajv": "^6.12.6",
       "minimatch": ">=10.2.3",
-      "hono": ">=4.11.10"
+      "hono": ">=4.11.10",
+      "dompurify": ">=3.3.2"
     },
     "auditConfig": {
       "ignoreCves": [

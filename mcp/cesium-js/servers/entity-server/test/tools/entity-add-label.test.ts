@@ -41,10 +41,10 @@ describe("registerAddLabelEntity", () => {
     );
   });
 
-  it("returns success response for valid label entity", async () => {
+  it("handles basic success with default options", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
-      totalEntities: 1,
+      totalEntities: 5,
     });
 
     const response = await registeredHandler(validArgs);
@@ -52,42 +52,17 @@ describe("registerAddLabelEntity", () => {
     expect(response.structuredContent.success).toBe(true);
     expect(response.structuredContent.message).toContain("Label entity");
     expect(response.isError).toBe(false);
-  });
-
-  it("sends entity_add command with label graphics", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
+    expect(response.structuredContent.message).toContain("Hello World");
+    expect(response.structuredContent.entityName).toBe("Label");
+    expect(response.structuredContent.message).toContain('"Label"');
+    expect(response.structuredContent.position).toEqual(validArgs.position);
+    expect(response.structuredContent.stats?.totalEntities).toBe(5);
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.type).toBe("entity_add");
     expect(command.entity.label).toEqual(validArgs.label);
-  });
-
-  it("includes position in entity", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
-
-    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.entity.position).toEqual(validArgs.position);
-  });
-
-  it("includes label text in success message", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    const response = await registeredHandler(validArgs);
-
-    expect(response.structuredContent.message).toContain("Hello World");
+    expect(command.entity.id).toMatch(/^label_/);
   });
 
   it("uses provided name", async () => {
@@ -105,16 +80,17 @@ describe("registerAddLabelEntity", () => {
     expect(response.structuredContent.message).toContain("My Label");
   });
 
-  it("uses provided id", async () => {
+  it("handles success with provided id", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
       totalEntities: 1,
     });
 
-    await registeredHandler({ ...validArgs, id: "custom-label-id" });
+    const response = await registeredHandler({ ...validArgs, id: "label-42" });
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.id).toBe("custom-label-id");
+    expect(command.entity.id).toBe("label-42");
+    expect(response.structuredContent.entityId).toBe("label-42");
   });
 
   it("returns error response when executeCommand rejects", async () => {
@@ -139,5 +115,20 @@ describe("registerAddLabelEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+  });
+
+  it("forwards description to entity command", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      totalEntities: 1,
+    });
+
+    await registeredHandler({
+      ...validArgs,
+      description: "<p>A text label</p>",
+    });
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command.entity.description).toBe("<p>A text label</p>");
   });
 });

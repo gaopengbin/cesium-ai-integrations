@@ -1016,7 +1016,11 @@ describe("Entity Manager Unit Tests", () => {
         const e1 = { id: "e1", name: "Route Marker A" };
         const e2 = { id: "e2", name: "Route Marker B" };
         const e3 = { id: "e3", name: "Unrelated Entity" };
-        (mockViewer.entities as Record<string, unknown>).values = [e1, e2, e3];
+        (mockViewer.entities as unknown as Record<string, unknown>).values = [
+          e1,
+          e2,
+          e3,
+        ];
 
         const cmd: MCPCommand = {
           type: "entity_remove",
@@ -1038,7 +1042,9 @@ describe("Entity Manager Unit Tests", () => {
 
       it("should return zero count when no entities match the pattern", async () => {
         const e1 = { id: "e1", name: "Some Entity" };
-        (mockViewer.entities as Record<string, unknown>).values = [e1];
+        (mockViewer.entities as unknown as Record<string, unknown>).values = [
+          e1,
+        ];
 
         const cmd: MCPCommand = {
           type: "entity_remove",
@@ -1055,7 +1061,7 @@ describe("Entity Manager Unit Tests", () => {
       });
 
       it("should handle empty entity collection for namePattern removal", async () => {
-        (mockViewer.entities as Record<string, unknown>).values = [];
+        (mockViewer.entities as unknown as Record<string, unknown>).values = [];
 
         const cmd: MCPCommand = {
           type: "entity_remove",
@@ -1097,7 +1103,7 @@ describe("Entity Manager Unit Tests", () => {
     });
 
     it("should return empty list when no entities exist", async () => {
-      (mockViewer.entities as Record<string, unknown>).values = [];
+      (mockViewer.entities as unknown as Record<string, unknown>).values = [];
 
       const result = (await handler()({} as MCPCommand)) as {
         success: boolean;
@@ -1116,7 +1122,11 @@ describe("Entity Manager Unit Tests", () => {
       const e1 = { id: "pt1", name: "My Point", point: {} };
       const e2 = { id: "lb1", name: "My Label", label: {} };
       const e3 = { id: "pg1", name: "My Polygon", polygon: {} };
-      (mockViewer.entities as Record<string, unknown>).values = [e1, e2, e3];
+      (mockViewer.entities as unknown as Record<string, unknown>).values = [
+        e1,
+        e2,
+        e3,
+      ];
 
       const result = (await handler()({} as MCPCommand)) as {
         success: boolean;
@@ -1141,7 +1151,7 @@ describe("Entity Manager Unit Tests", () => {
         point: {},
         position: { getValue: vi.fn(() => mockPosition) },
       };
-      (mockViewer.entities as Record<string, unknown>).values = [e1];
+      (mockViewer.entities as unknown as Record<string, unknown>).values = [e1];
 
       const result = (await handler()({} as MCPCommand)) as {
         entities: { id: string; position?: object }[];
@@ -1157,7 +1167,7 @@ describe("Entity Manager Unit Tests", () => {
         point: {},
         position: { getValue: vi.fn(() => null) },
       };
-      (mockViewer.entities as Record<string, unknown>).values = [e1];
+      (mockViewer.entities as unknown as Record<string, unknown>).values = [e1];
 
       const result = (await handler()({} as MCPCommand)) as {
         entities: { id: string; position?: object }[];
@@ -1168,7 +1178,7 @@ describe("Entity Manager Unit Tests", () => {
 
     it("should handle entities without a position property", async () => {
       const e1 = { id: "no-pos-prop", name: "No Position Prop", polygon: {} };
-      (mockViewer.entities as Record<string, unknown>).values = [e1];
+      (mockViewer.entities as unknown as Record<string, unknown>).values = [e1];
 
       const result = (await handler()({} as MCPCommand)) as {
         success: boolean;
@@ -1195,7 +1205,8 @@ describe("Entity Manager Unit Tests", () => {
         { id: "12", name: "Corridor", corridor: {} },
         { id: "13", name: "Unknown" },
       ];
-      (mockViewer.entities as Record<string, unknown>).values = entities;
+      (mockViewer.entities as unknown as Record<string, unknown>).values =
+        entities;
 
       const result = (await handler()({} as MCPCommand)) as {
         entities: { id: string; type: string }[];

@@ -36,7 +36,7 @@ describe("registerRemoveEntity", () => {
     );
   });
 
-  it("removes entity by entityId", async () => {
+  it("handles entity removal by entityId", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
       removedEntityId: "point_001",
@@ -48,16 +48,8 @@ describe("registerRemoveEntity", () => {
     expect(response.structuredContent.success).toBe(true);
     expect(response.structuredContent.message).toContain("point_001");
     expect(response.isError).toBe(false);
-  });
-
-  it("sends entity_remove command with entityId", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      removedEntityId: "point_001",
-      removedCount: 1,
-    });
-
-    await registeredHandler({ entityId: "point_001" });
+    expect(response.structuredContent.removedEntityId).toBe("point_001");
+    expect(response.structuredContent.removedCount).toBe(1);
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command).toMatchObject({
@@ -66,10 +58,10 @@ describe("registerRemoveEntity", () => {
     });
   });
 
-  it("removes entity by namePattern", async () => {
+  it("handles entity removal by namePattern with removeAll", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
-      removedCount: 3,
+      removedCount: 5,
     });
 
     const response = await registeredHandler({
@@ -78,21 +70,13 @@ describe("registerRemoveEntity", () => {
     });
 
     expect(response.structuredContent.success).toBe(true);
-    expect(response.structuredContent.message).toContain("3");
-  });
-
-  it("sends namePattern and removeAll in command", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      removedCount: 2,
-    });
-
-    await registeredHandler({ namePattern: "billboard.*", removeAll: true });
+    expect(response.structuredContent.message).toContain("5");
+    expect(response.structuredContent.message).toContain("Point.*");
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command).toMatchObject({
       type: "entity_remove",
-      namePattern: "billboard.*",
+      namePattern: "Point.*",
       removeAll: true,
     });
   });
@@ -116,6 +100,7 @@ describe("registerRemoveEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+    expect(response.structuredContent.message).toContain("Failed");
   });
 
   it("returns error response when result.success is false", async () => {

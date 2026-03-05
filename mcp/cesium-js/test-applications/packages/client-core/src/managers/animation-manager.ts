@@ -13,6 +13,18 @@ import type {
   ColorRGBA,
   PositionSample,
   AnimationState,
+  ClockConfigureResult,
+  ClockSetTimeResult,
+  ClockSetMultiplierResult,
+  AnimationCreateResult,
+  AnimationPlayResult,
+  AnimationPauseResult,
+  AnimationRemoveResult,
+  AnimationPathConfigureResult,
+  AnimationTrackResult,
+  AnimationUntrackResult,
+  AnimationListResult,
+  GlobeLightingResult,
 } from "../types/mcp.js";
 import type { CesiumViewer, CesiumEntity } from "../types/cesium-types.js";
 
@@ -85,7 +97,7 @@ class CesiumAnimationManager implements ManagerInterface {
     setClockShouldAnimate(this.viewer, true);
   }
 
-  private configure(clockConfig: ClockConfig): MCPCommandResult {
+  private configure(clockConfig: ClockConfig): ClockConfigureResult {
     return this.wrapOperation(() => {
       const clock = this.viewer.clock;
 
@@ -129,7 +141,7 @@ class CesiumAnimationManager implements ManagerInterface {
   /**
    * Set the current time of the animation clock
    */
-  private setTime(currentTime: string | JulianDate): MCPCommandResult {
+  private setTime(currentTime: string | JulianDate): ClockSetTimeResult {
     return this.wrapOperation(() => {
       setClockCurrentTime(this.viewer, currentTime);
       const time = parseJulianDate(currentTime);
@@ -144,7 +156,7 @@ class CesiumAnimationManager implements ManagerInterface {
   /**
    * Set the clock multiplier for speed control
    */
-  private setMultiplier(multiplier: number): MCPCommandResult {
+  private setMultiplier(multiplier: number): ClockSetMultiplierResult {
     return this.wrapOperation(() => {
       setClockMultiplier(this.viewer, multiplier);
 
@@ -174,7 +186,7 @@ class CesiumAnimationManager implements ManagerInterface {
   /**
    * Create animation from route
    */
-  private createAnimationFromRoute(cmd: MCPCommand): MCPCommandResult {
+  private createAnimationFromRoute(cmd: MCPCommand): AnimationCreateResult {
     return this.wrapOperation(() => {
       const animationId = this.getParam<string>(cmd, "animationId");
       // Use animationId as the entity ID (single ID for both)
@@ -281,7 +293,7 @@ class CesiumAnimationManager implements ManagerInterface {
   /**
    * Play animation
    */
-  private playAnimation(): MCPCommandResult {
+  private playAnimation(): AnimationPlayResult {
     return this.wrapOperation(() => {
       setClockShouldAnimate(this.viewer, true);
       return {
@@ -294,7 +306,7 @@ class CesiumAnimationManager implements ManagerInterface {
   /**
    * Pause animation
    */
-  private pauseAnimation(): MCPCommandResult {
+  private pauseAnimation(): AnimationPauseResult {
     return this.wrapOperation(() => {
       setClockShouldAnimate(this.viewer, false);
       return {
@@ -307,7 +319,7 @@ class CesiumAnimationManager implements ManagerInterface {
   /**
    * Remove animation
    */
-  private removeAnimation(cmd: MCPCommand): MCPCommandResult {
+  private removeAnimation(cmd: MCPCommand): AnimationRemoveResult {
     return this.wrapOperation(() => {
       const animationId = this.getParam<string>(cmd, "animationId");
       // animationId is also the entity ID
@@ -351,7 +363,9 @@ class CesiumAnimationManager implements ManagerInterface {
   /**
    * Configure path visualization
    */
-  private configureAnimationPath(cmd: MCPCommand): MCPCommandResult {
+  private configureAnimationPath(
+    cmd: MCPCommand,
+  ): AnimationPathConfigureResult {
     return this.wrapOperation(() => {
       const animationId = this.getParam<string>(cmd, "animationId");
       const leadTime = this.getParam<number | undefined>(cmd, "leadTime");
@@ -398,7 +412,7 @@ class CesiumAnimationManager implements ManagerInterface {
   /**
    * Track entity with camera
    */
-  private trackAnimationEntity(cmd: MCPCommand): MCPCommandResult {
+  private trackAnimationEntity(cmd: MCPCommand): AnimationTrackResult {
     return this.wrapOperation(() => {
       const animationId = this.getParam<string>(cmd, "animationId");
       const range = this.getParam<number | undefined>(cmd, "range");
@@ -443,7 +457,7 @@ class CesiumAnimationManager implements ManagerInterface {
   /**
    * Untrack camera
    */
-  private untrackCamera(): MCPCommandResult {
+  private untrackCamera(): AnimationUntrackResult {
     return this.wrapOperation(() => {
       this.viewer.trackedEntity = undefined;
       resetCameraTransform(this.viewer);
@@ -458,7 +472,7 @@ class CesiumAnimationManager implements ManagerInterface {
   /**
    * List all active animations
    */
-  private listActiveAnimations(): MCPCommandResult {
+  private listActiveAnimations(): AnimationListResult {
     return this.wrapOperation(() => {
       const activeAnimations = Array.from(this.animations.entries()).map(
         ([animationId, anim]) => {
@@ -489,7 +503,7 @@ class CesiumAnimationManager implements ManagerInterface {
     enableLighting: boolean,
     enableDynamicAtmosphere: boolean = true,
     enableSunLighting: boolean = true,
-  ): MCPCommandResult {
+  ): GlobeLightingResult {
     return this.wrapOperation(() => {
       const scene = this.viewer.scene;
 

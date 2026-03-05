@@ -118,6 +118,7 @@ describe("camera-set-controller-options tool", () => {
 
     it("should handle boolean flags correctly", async () => {
       const options = {
+        enableCollisionDetection: false,
         enableTilt: false,
         enableRotate: false,
         enableTranslate: false,
@@ -131,6 +132,9 @@ describe("camera-set-controller-options tool", () => {
 
       const response = await registeredHandler(options);
 
+      expect(response.structuredContent.settings.enableCollisionDetection).toBe(
+        false,
+      );
       expect(response.structuredContent.settings.enableTilt).toBe(false);
       expect(response.structuredContent.settings.enableRotate).toBe(false);
       expect(response.structuredContent.settings.enableTranslate).toBe(false);
@@ -167,6 +171,34 @@ describe("camera-set-controller-options tool", () => {
       expect(response.structuredContent.message).toBe(
         "Camera controller options updated",
       );
+    });
+
+    it("should include responseTime in stats", async () => {
+      vi.mocked(mockCommunicationServer.executeCommand).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(() => resolve({ success: true, settings: {} }), 10);
+          }),
+      );
+
+      const response = await registeredHandler({});
+
+      expect(response.structuredContent.stats.responseTime).toBeGreaterThan(0);
+    });
+
+    it("should handle error when Cesium returns null settings", async () => {
+      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
+        success: true,
+        settings: null,
+      });
+
+      const response = await registeredHandler({});
+
+      expect(response.structuredContent.success).toBe(false);
+      expect(response.structuredContent.message).toContain(
+        "Cesium viewer did not return controller settings",
+      );
+      expect(response.isError).toBe(true);
     });
 
     it("should set undefined options to null in response", async () => {
@@ -250,6 +282,7 @@ describe("camera-set-controller-options tool", () => {
       expect(
         response.structuredContent.settings.maximumZoomDistance,
       ).toBeNull();
+      expect(response.structuredContent.stats.responseTime).toBe(0);
     });
 
     it("should preserve provided values in error response", async () => {
@@ -268,73 +301,6 @@ describe("camera-set-controller-options tool", () => {
         false,
       );
       expect(response.structuredContent.settings.minimumZoomDistance).toBe(500);
-    });
-
-    it("should set responseTime to 0 in error response", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockRejectedValue(
-        new Error("Test error"),
-      );
-
-      const response = await registeredHandler({});
-
-      expect(response.structuredContent.stats.responseTime).toBe(0);
-    });
-  });
-
-  describe("Edge cases", () => {
-    it("should handle enableCollisionDetection as false explicitly", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({
-        enableCollisionDetection: false,
-      });
-
-      expect(response.structuredContent.settings.enableCollisionDetection).toBe(
-        false,
-      );
-    });
-
-    it("should handle minimumZoomDistance of 0", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({ minimumZoomDistance: 0 });
-
-      expect(response.structuredContent.settings.minimumZoomDistance).toBe(0);
-    });
-
-    it("should handle maximumZoomDistance of 0", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({ maximumZoomDistance: 0 });
-
-      expect(response.structuredContent.settings.maximumZoomDistance).toBe(0);
-    });
-
-    it("should handle all boolean flags as false", async () => {
-      const options = {
-        enableCollisionDetection: false,
-        enableTilt: false,
-        enableRotate: false,
-        enableTranslate: false,
-        enableZoom: false,
-        enableLook: false,
-      };
-
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler(options);
-
-      Object.entries(options).forEach(([key, value]) => {
-        expect(response.structuredContent.settings[key]).toBe(value);
-      });
     });
   });
 });

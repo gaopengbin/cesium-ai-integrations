@@ -41,10 +41,10 @@ describe("registerAddModelEntity", () => {
     );
   });
 
-  it("returns success response for valid model entity", async () => {
+  it("handles basic success with default options", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
-      totalEntities: 1,
+      totalEntities: 6,
     });
 
     const response = await registeredHandler(validArgs);
@@ -52,31 +52,17 @@ describe("registerAddModelEntity", () => {
     expect(response.structuredContent.success).toBe(true);
     expect(response.structuredContent.message).toContain("3D Model entity");
     expect(response.isError).toBe(false);
-  });
-
-  it("sends entity_add command with model graphics", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
+    expect(response.structuredContent.entityName).toBe("3D Model");
+    expect(response.structuredContent.message).toContain('"3D Model"');
+    expect(response.structuredContent.position).toEqual(validArgs.position);
+    expect(response.structuredContent.stats?.totalEntities).toBe(6);
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.type).toBe("entity_add");
     expect(command.entity.model).toEqual(validArgs.model);
-  });
-
-  it("includes position in entity", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
-
-    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.entity.position).toEqual(validArgs.position);
+    expect(command.entity.orientation).toBeUndefined();
+    expect(command.entity.id).toMatch(/^model_/);
   });
 
   it("includes orientation when provided", async () => {
@@ -107,16 +93,17 @@ describe("registerAddModelEntity", () => {
     expect(response.structuredContent.message).toContain("Custom Model");
   });
 
-  it("uses provided id", async () => {
+  it("handles success with provided id", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
       totalEntities: 1,
     });
 
-    await registeredHandler({ ...validArgs, id: "model-xyz" });
+    const response = await registeredHandler({ ...validArgs, id: "model-42" });
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.id).toBe("model-xyz");
+    expect(command.entity.id).toBe("model-42");
+    expect(response.structuredContent.entityId).toBe("model-42");
   });
 
   it("returns error response when executeCommand rejects", async () => {
@@ -141,5 +128,17 @@ describe("registerAddModelEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+  });
+
+  it("forwards description to entity command", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      totalEntities: 1,
+    });
+
+    await registeredHandler({ ...validArgs, description: "<p>A 3D model</p>" });
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command.entity.description).toBe("<p>A 3D model</p>");
   });
 });

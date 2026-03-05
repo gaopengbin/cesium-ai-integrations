@@ -79,16 +79,6 @@ describe("camera-stop-orbit tool", () => {
 
       expect(response.structuredContent.stats.responseTime).toBeGreaterThan(0);
     });
-
-    it("should set orbitActive to false on success", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler();
-
-      expect(response.structuredContent.orbitActive).toBe(false);
-    });
   });
 
   describe("Unhappy paths", () => {
@@ -131,7 +121,7 @@ describe("camera-stop-orbit tool", () => {
       );
     });
 
-    it("should set orbitActive to false in error response", async () => {
+    it("should set orbitActive=false and zero responseTime in error response", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockRejectedValue(
         new Error("Test error"),
       );
@@ -139,39 +129,7 @@ describe("camera-stop-orbit tool", () => {
       const response = await registeredHandler();
 
       expect(response.structuredContent.orbitActive).toBe(false);
-    });
-
-    it("should set responseTime to 0 in error response", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockRejectedValue(
-        new Error("Test error"),
-      );
-
-      const response = await registeredHandler();
-
       expect(response.structuredContent.stats.responseTime).toBe(0);
-    });
-  });
-
-  describe("Edge cases", () => {
-    it("should handle being called when no orbit is active (success case)", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler();
-
-      expect(response.structuredContent.success).toBe(true);
-      expect(response.structuredContent.orbitActive).toBe(false);
-    });
-
-    it("should be callable with empty object parameter", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler();
-
-      expect(response.structuredContent.success).toBe(true);
     });
   });
 });

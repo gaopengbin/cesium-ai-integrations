@@ -37,7 +37,7 @@ describe("animation_camera_tracking tool", () => {
   });
 
   describe("Happy paths - tracking enabled", () => {
-    it("should send track command with defaults", async () => {
+    it("should send track command with defaults and return correct response", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
         success: true,
       });
@@ -61,6 +61,7 @@ describe("animation_camera_tracking tool", () => {
       expect(response.structuredContent.success).toBe(true);
       expect(response.structuredContent.isTracking).toBe(true);
       expect(response.structuredContent.trackedAnimationId).toBe("anim-001");
+      expect(response.structuredContent.message).toContain("anim-001");
     });
 
     it("should send track command with custom range and pitch", async () => {
@@ -80,20 +81,6 @@ describe("animation_camera_tracking tool", () => {
         expect.objectContaining({ range: 500, pitch: -30, heading: 45 }),
         expect.any(Number),
       );
-    });
-
-    it("should return isTracking=true when tracking", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({
-        track: true,
-        animationId: "anim-001",
-      });
-
-      expect(response.structuredContent.isTracking).toBe(true);
-      expect(response.structuredContent.message).toContain("anim-001");
     });
   });
 
@@ -117,6 +104,7 @@ describe("animation_camera_tracking tool", () => {
         expect.any(Number),
       );
       expect(response.structuredContent.isTracking).toBe(false);
+      expect(response.structuredContent.message).toContain("disabled");
     });
   });
 

@@ -39,12 +39,12 @@ describe("animation_update_path tool", () => {
   });
 
   describe("Happy paths", () => {
-    it("should send path update command with animationId", async () => {
+    it("should send path update command and return correct response", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
         success: true,
       });
 
-      await registeredHandler({ animationId: "anim-001" });
+      const response = await registeredHandler({ animationId: "anim-001" });
 
       expect(mockCommunicationServer.executeCommand).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -53,6 +53,11 @@ describe("animation_update_path tool", () => {
         }),
         expect.any(Number),
       );
+      expect(response.structuredContent.success).toBe(true);
+      expect(response.structuredContent.message).toContain(
+        "Path visualization updated",
+      );
+      expect(response.structuredContent.animationId).toBe("anim-001");
     });
 
     it("should send path update with all optional fields", async () => {
@@ -77,33 +82,6 @@ describe("animation_update_path tool", () => {
         }),
         expect.any(Number),
       );
-    });
-
-    it("should return success response", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({
-        animationId: "anim-001",
-      });
-
-      expect(response.structuredContent.success).toBe(true);
-      expect(response.structuredContent.message).toContain(
-        "Path visualization updated",
-      );
-    });
-
-    it("should include animationId in response", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({
-        animationId: "anim-42",
-      });
-
-      expect(response.structuredContent.animationId).toBe("anim-42");
     });
   });
 

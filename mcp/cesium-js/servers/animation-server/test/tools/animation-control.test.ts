@@ -37,7 +37,7 @@ describe("animation_control tool", () => {
   });
 
   describe("Happy paths", () => {
-    it("should send play command and return success", async () => {
+    it("should send play command and return correct response", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
         success: true,
       });
@@ -57,15 +57,16 @@ describe("animation_control tool", () => {
       );
       expect(response.structuredContent.success).toBe(true);
       expect(response.structuredContent.animationId).toBe("anim-001");
+      expect(response.structuredContent.message).toContain("playback started");
     });
 
-    it("should send pause command and return success", async () => {
+    it("should send pause command and return correct response", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
         success: true,
       });
 
       const response = await registeredHandler({
-        animationId: "anim-002",
+        animationId: "anim-001",
         action: "pause",
       });
 
@@ -73,36 +74,12 @@ describe("animation_control tool", () => {
         expect.objectContaining({
           type: "animation_control",
           action: "pause",
-          animationId: "anim-002",
+          animationId: "anim-001",
         }),
         expect.any(Number),
       );
       expect(response.structuredContent.success).toBe(true);
-    });
-
-    it("should include correct message for play action", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({
-        animationId: "anim-001",
-        action: "play",
-      });
-
-      expect(response.structuredContent.message).toContain("playback started");
-    });
-
-    it("should include correct message for pause action", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({
-        animationId: "anim-001",
-        action: "pause",
-      });
-
+      expect(response.structuredContent.animationId).toBe("anim-001");
       expect(response.structuredContent.message).toContain("paused");
     });
   });

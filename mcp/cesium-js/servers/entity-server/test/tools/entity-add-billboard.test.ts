@@ -41,7 +41,7 @@ describe("registerAddBillboardEntity", () => {
     );
   });
 
-  it("returns success response for valid billboard entity", async () => {
+  it("handles basic success with default options", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
       totalEntities: 1,
@@ -52,31 +52,16 @@ describe("registerAddBillboardEntity", () => {
     expect(response.structuredContent.success).toBe(true);
     expect(response.structuredContent.message).toContain("Billboard entity");
     expect(response.isError).toBe(false);
-  });
-
-  it("sends entity_add command with billboard graphics", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
+    expect(response.structuredContent.entityName).toBe("Billboard");
+    expect(response.structuredContent.message).toContain("Billboard");
+    expect(response.structuredContent.position).toEqual(validArgs.position);
+    expect(response.structuredContent.stats?.totalEntities).toBe(1);
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.type).toBe("entity_add");
     expect(command.entity.billboard).toEqual(validArgs.billboard);
-  });
-
-  it("includes position in entity", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
-
-    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.position).toEqual(validArgs.position);
+    expect(command.entity.description).toBeUndefined();
+    expect(command.entity.id).toMatch(/^billboard_/);
   });
 
   it("uses provided name", async () => {
@@ -103,6 +88,7 @@ describe("registerAddBillboardEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+    expect(response.structuredContent.message).toContain("Network error");
   });
 
   it("returns error response when result.success is false", async () => {
@@ -115,6 +101,9 @@ describe("registerAddBillboardEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+    expect(response.structuredContent.message).toContain(
+      "Failed to add billboard",
+    );
   });
 
   it("passes scale and color from billboard config", async () => {
@@ -134,5 +123,37 @@ describe("registerAddBillboardEntity", () => {
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.entity.billboard.scale).toBe(1.5);
+    expect(command.entity.billboard.color).toEqual({
+      red: 1,
+      green: 0,
+      blue: 0,
+    });
+  });
+
+  it("uses provided id in the entity command", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      totalEntities: 1,
+    });
+
+    await registeredHandler({ ...validArgs, id: "custom-id-123" });
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command.entity.id).toBe("custom-id-123");
+  });
+
+  it("includes description in the entity command when provided", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      totalEntities: 1,
+    });
+
+    await registeredHandler({
+      ...validArgs,
+      description: "An airport runway marker",
+    });
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command.entity.description).toBe("An airport runway marker");
   });
 });

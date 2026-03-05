@@ -41,10 +41,10 @@ describe("registerAddCylinderEntity", () => {
     );
   });
 
-  it("returns success response for valid cylinder entity", async () => {
+  it("handles basic success with default options", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
-      totalEntities: 1,
+      totalEntities: 3,
     });
 
     const response = await registeredHandler(validArgs);
@@ -52,31 +52,17 @@ describe("registerAddCylinderEntity", () => {
     expect(response.structuredContent.success).toBe(true);
     expect(response.structuredContent.message).toContain("Cylinder entity");
     expect(response.isError).toBe(false);
-  });
-
-  it("sends entity_add command with cylinder graphics", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
+    expect(response.structuredContent.entityName).toBe("Cylinder");
+    expect(response.structuredContent.message).toContain('"Cylinder"');
+    expect(response.structuredContent.position).toEqual(validArgs.position);
+    expect(response.structuredContent.stats?.totalEntities).toBe(3);
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.type).toBe("entity_add");
     expect(command.entity.cylinder).toEqual(validArgs.cylinder);
-  });
-
-  it("includes position in entity", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
-
-    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.entity.position).toEqual(validArgs.position);
+    expect(command.entity.orientation).toBeUndefined();
+    expect(command.entity.id).toMatch(/^cylinder_/);
   });
 
   it("includes orientation when provided", async () => {
@@ -104,16 +90,17 @@ describe("registerAddCylinderEntity", () => {
     expect(response.structuredContent.message).toContain("Tower");
   });
 
-  it("uses provided id", async () => {
+  it("handles success with provided id", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
       totalEntities: 1,
     });
 
-    await registeredHandler({ ...validArgs, id: "cyl-001" });
+    const response = await registeredHandler({ ...validArgs, id: "cyl-42" });
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.id).toBe("cyl-001");
+    expect(command.entity.id).toBe("cyl-42");
+    expect(response.structuredContent.entityId).toBe("cyl-42");
   });
 
   it("returns error response when executeCommand rejects", async () => {
@@ -125,6 +112,7 @@ describe("registerAddCylinderEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+    expect(response.structuredContent.message).toContain("Connection error");
   });
 
   it("returns error response when result.success is false", async () => {
@@ -137,5 +125,18 @@ describe("registerAddCylinderEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+    expect(response.structuredContent.message).toContain("Render failed");
+  });
+
+  it("forwards description to entity command", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      totalEntities: 1,
+    });
+
+    await registeredHandler({ ...validArgs, description: "<p>A tower</p>" });
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command.entity.description).toBe("<p>A tower</p>");
   });
 });

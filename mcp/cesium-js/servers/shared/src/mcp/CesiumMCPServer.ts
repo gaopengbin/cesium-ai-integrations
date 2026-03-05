@@ -116,7 +116,7 @@ export class CesiumMCPServer {
    * Start Streamable HTTP transport (recommended for HTTP-based scenarios)
    */
   private async startStreamableHttpTransport(): Promise<void> {
-    const endpoint = this.config.mcpTransportEndpoint || "/mcp";
+    const endpoint = "/mcp";
     const mcpPort =
       (this.config.communicationServerPort || 3000) + MCP_PORT_OFFSET; // Use different port for MCP transport
 
@@ -159,7 +159,7 @@ export class CesiumMCPServer {
    */
   public async stop(): Promise<void> {
     if (!this.config.silent) {
-      console.error("\n🛑 Shutting down...");
+      console.error("\nShutting down...");
     }
 
     // Close MCP transport server if it exists

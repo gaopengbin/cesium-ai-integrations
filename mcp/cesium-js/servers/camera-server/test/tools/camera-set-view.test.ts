@@ -161,18 +161,6 @@ describe("camera-set-view tool", () => {
       expect(response.isError).toBe(true);
     });
 
-    it("should set responseTime to 0 in error response", async () => {
-      const destination = { longitude: 0, latitude: 0, height: 0 };
-
-      vi.mocked(mockCommunicationServer.executeCommand).mockRejectedValue(
-        new Error("Test error"),
-      );
-
-      const response = await registeredHandler({ destination });
-
-      expect(response.structuredContent.stats.responseTime).toBe(0);
-    });
-
     it("should include destination and orientation in error response", async () => {
       const destination = { longitude: -105, latitude: 39, height: 1609 };
       const orientation = { heading: 90, pitch: -45, roll: 0 };
@@ -187,7 +175,7 @@ describe("camera-set-view tool", () => {
       expect(response.structuredContent.orientation).toEqual(orientation);
     });
 
-    it("should use DEFAULT_ORIENTATION in error when orientation not provided", async () => {
+    it("should use DEFAULT_ORIENTATION and zero responseTime in error when orientation not provided", async () => {
       const destination = { longitude: 0, latitude: 0, height: 0 };
 
       vi.mocked(mockCommunicationServer.executeCommand).mockRejectedValue(
@@ -199,6 +187,7 @@ describe("camera-set-view tool", () => {
       expect(response.structuredContent.orientation).toEqual(
         DEFAULT_ORIENTATION,
       );
+      expect(response.structuredContent.stats.responseTime).toBe(0);
     });
   });
 });

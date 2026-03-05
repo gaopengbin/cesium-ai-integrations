@@ -31,7 +31,6 @@ async function main() {
         communicationServerMaxRetries: MAX_RETRIES,
         communicationServerStrictPort: STRICT_PORT,
         // mcpTransport: process.env.MCP_TRANSPORT || "stdio", optionally specify transport type
-        // mcpTransportEndpoint: process.env.MCP_TRANSPORT_ENDPOINT, optionally specify transport endpoint
       },
       communicationServer,
     );

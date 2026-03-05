@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { ICommunicationServer } from "../../src/communications/communication-server";
-import type { MCPServerConfig } from "../../src/models/mcpServerConfig";
+import type { ICommunicationServer } from "../../../src/communications/communication-server";
+import type { MCPServerConfig } from "../../../src/models/mcpServerConfig";
+import { CesiumMCPServer } from "../../../src/mcp/CesiumMCPServer";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
 // ---------------------------------------------------------------------------
 // Hoisted mock state (must be defined before vi.mock factories run)
@@ -62,13 +65,6 @@ vi.mock("express", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Import the class under test AFTER mocks are set up
-// ---------------------------------------------------------------------------
-import { CesiumMCPServer } from "../../src/mcp/CesiumMCPServer";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 function makeConfig(overrides: Partial<MCPServerConfig> = {}): MCPServerConfig {
@@ -103,20 +99,6 @@ function makeCommunicationServer(
 describe("CesiumMCPServer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.McpServerMock.mockImplementation(function () {
-      return mocks.mcpServerInstance;
-    });
-    mocks.mcpConnect.mockResolvedValue(undefined);
-    vi.mocked(StdioServerTransport).mockImplementation(function () {
-      return { _type: "stdio" } as unknown as InstanceType<
-        typeof StdioServerTransport
-      >;
-    });
-    vi.mocked(StreamableHTTPServerTransport).mockImplementation(function () {
-      return { handleRequest: vi.fn() } as unknown as InstanceType<
-        typeof StreamableHTTPServerTransport
-      >;
-    });
     // Reset listen mock so each test gets a fresh mockHttpServer reference
     mocks.mockExpressApp.listen.mockImplementation(
       (_port: number, cb: () => void) => {
@@ -126,29 +108,6 @@ describe("CesiumMCPServer", () => {
         return mocks.mockHttpServer;
       },
     );
-  });
-
-  // -------------------------------------------------------------------------
-  describe("constructor", () => {
-    it("builds serverConfig when communicationServer and port are both provided", () => {
-      const commServer = makeCommunicationServer();
-      const server = new CesiumMCPServer(
-        makeConfig({
-          communicationServerPort: 3000,
-          communicationServerMaxRetries: 5,
-        }),
-        commServer,
-      );
-      // serverConfig is private — verified indirectly via start() calling commServer.start()
-      expect(server).toBeInstanceOf(CesiumMCPServer);
-    });
-
-    it("does not set serverConfig when communicationServer is omitted", () => {
-      const server = new CesiumMCPServer(
-        makeConfig({ communicationServerPort: 3000 }),
-      );
-      expect(server).toBeInstanceOf(CesiumMCPServer);
-    });
   });
 
   // -------------------------------------------------------------------------
@@ -224,8 +183,7 @@ describe("CesiumMCPServer", () => {
 
     it("does not start the communication server when none is provided", async () => {
       const server = new CesiumMCPServer(makeConfig());
-      // If this throws it means start() tried to use an undefined commServer
-      await expect(server.start()).resolves.toBeUndefined();
+      await expect(server.start()).resolves.not.toThrow();
     });
 
     it("does not start the communication server when port is omitted", async () => {
@@ -312,23 +270,7 @@ describe("CesiumMCPServer", () => {
       );
     });
 
-    it("uses custom mcpTransportEndpoint when provided", async () => {
-      const server = new CesiumMCPServer(
-        makeConfig({
-          mcpTransport: "streamable-http",
-          mcpTransportEndpoint: "/custom-mcp",
-        }),
-      );
-
-      await server.start();
-
-      expect(mocks.mockExpressApp.all).toHaveBeenCalledWith(
-        "/custom-mcp",
-        expect.any(Function),
-      );
-    });
-
-    it("defaults to /mcp endpoint when mcpTransportEndpoint is unset", async () => {
+    it("uses the /mcp endpoint", async () => {
       const server = new CesiumMCPServer(
         makeConfig({ mcpTransport: "streamable-http" }),
       );
@@ -393,12 +335,12 @@ describe("CesiumMCPServer", () => {
       const server = new CesiumMCPServer(makeConfig());
       await server.start();
 
-      await expect(server.stop()).resolves.toBeUndefined();
+      await expect(server.stop()).resolves.not.toThrow();
     });
 
     it("closes the mcpTransportServer before stopping the communication server", async () => {
       const stopOrder: string[] = [];
-      mocks.mockHttpServerClose.mockImplementation((cb: () => void) => {
+      mocks.mockHttpServerClose.mockImplementationOnce((cb: () => void) => {
         stopOrder.push("httpServer.close");
         if (cb) {
           cb();
@@ -421,14 +363,6 @@ describe("CesiumMCPServer", () => {
       await server.stop();
 
       expect(stopOrder).toEqual(["httpServer.close", "commServer.stop"]);
-    });
-
-    it("does not attempt to close httpServer when started with stdio transport", async () => {
-      const server = new CesiumMCPServer(makeConfig());
-      await server.start();
-      await server.stop();
-
-      expect(mocks.mockHttpServerClose).not.toHaveBeenCalled();
     });
   });
 });

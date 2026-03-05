@@ -37,12 +37,12 @@ describe("globe_set_lighting tool", () => {
   });
 
   describe("Happy paths", () => {
-    it("should send globe lighting command with enableLighting=true", async () => {
+    it("should send command and return enabled response when all lighting is on", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
         success: true,
       });
 
-      await registeredHandler({
+      const response = await registeredHandler({
         enableLighting: true,
         enableDynamicAtmosphere: true,
         enableSunLighting: true,
@@ -57,52 +57,55 @@ describe("globe_set_lighting tool", () => {
         }),
         expect.any(Number),
       );
+      expect(response.structuredContent.success).toBe(true);
+      expect(response.structuredContent.message).toContain("enabled");
     });
 
-    it("should send globe lighting command with enableLighting=false", async () => {
+    it("should send command and return disabled response when all lighting is off", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
         success: true,
       });
 
-      await registeredHandler({
+      const response = await registeredHandler({
         enableLighting: false,
         enableDynamicAtmosphere: false,
         enableSunLighting: false,
       });
 
       expect(mockCommunicationServer.executeCommand).toHaveBeenCalledWith(
-        expect.objectContaining({ enableLighting: false }),
+        expect.objectContaining({
+          enableLighting: false,
+          enableDynamicAtmosphere: false,
+          enableSunLighting: false,
+        }),
         expect.any(Number),
       );
+      expect(response.structuredContent.success).toBe(true);
+      expect(response.structuredContent.message).toContain("disabled");
     });
 
-    it("should return success response with enabled message", async () => {
+    it("should send command with mixed lighting values", async () => {
       vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
         success: true,
       });
 
       const response = await registeredHandler({
         enableLighting: true,
-        enableDynamicAtmosphere: true,
-        enableSunLighting: false,
-      });
-
-      expect(response.structuredContent.success).toBe(true);
-      expect(response.structuredContent.message).toContain("enabled");
-    });
-
-    it("should return success response with disabled message", async () => {
-      vi.mocked(mockCommunicationServer.executeCommand).mockResolvedValue({
-        success: true,
-      });
-
-      const response = await registeredHandler({
-        enableLighting: false,
         enableDynamicAtmosphere: false,
         enableSunLighting: false,
       });
 
-      expect(response.structuredContent.message).toContain("disabled");
+      expect(mockCommunicationServer.executeCommand).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "globe_lighting",
+          enableLighting: true,
+          enableDynamicAtmosphere: false,
+          enableSunLighting: false,
+        }),
+        expect.any(Number),
+      );
+      expect(response.structuredContent.success).toBe(true);
+      expect(response.structuredContent.message).toContain("enabled");
     });
   });
 

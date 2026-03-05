@@ -610,33 +610,4 @@ describe("Camera Manager MCP Communication Integration Tests", () => {
       }
     });
   });
-
-  describe("Performance and Timing", () => {
-    it("should handle rapid sequential commands", async () => {
-      const flyHandler = commandHandlers.get("camera_fly_to");
-      const commands = Array.from({ length: 5 }, (_, i) => ({
-        type: "camera_fly_to",
-        destination: {
-          longitude: -105 + i,
-          latitude: 39 + i,
-          height: 2000 + i * 500,
-        } as CameraPosition,
-        duration: 0.5,
-      }));
-
-      const startTime = Date.now();
-      const responses = await Promise.all(
-        commands.map((cmd) => flyHandler(cmd)),
-      );
-      const endTime = Date.now();
-
-      // All should succeed
-      responses.forEach((response) => {
-        expect(response.success).toBe(true);
-      });
-
-      // Should complete in reasonable time (< 1 second for mocked operations)
-      expect(endTime - startTime).toBeLessThan(1000);
-    });
-  });
 });

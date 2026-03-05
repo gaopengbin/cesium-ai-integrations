@@ -41,10 +41,10 @@ describe("registerAddBoxEntity", () => {
     );
   });
 
-  it("returns success response for valid box entity", async () => {
+  it("handles basic success with default options", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
-      totalEntities: 1,
+      totalEntities: 5,
     });
 
     const response = await registeredHandler(validArgs);
@@ -52,31 +52,17 @@ describe("registerAddBoxEntity", () => {
     expect(response.structuredContent.success).toBe(true);
     expect(response.structuredContent.message).toContain("Box entity");
     expect(response.isError).toBe(false);
-  });
-
-  it("sends entity_add command with box graphics", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
+    expect(response.structuredContent.entityName).toBe("Box");
+    expect(response.structuredContent.message).toContain('"Box"');
+    expect(response.structuredContent.position).toEqual(validArgs.position);
+    expect(response.structuredContent.stats?.totalEntities).toBe(5);
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.type).toBe("entity_add");
     expect(command.entity.box).toEqual(validArgs.box);
-  });
-
-  it("includes position in entity", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
-
-    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.entity.position).toEqual(validArgs.position);
+    expect(command.entity.orientation).toBeUndefined();
+    expect(command.entity.id).toMatch(/^box_/);
   });
 
   it("includes orientation when provided", async () => {
@@ -107,16 +93,17 @@ describe("registerAddBoxEntity", () => {
     expect(response.structuredContent.message).toContain("Building A");
   });
 
-  it("uses provided id", async () => {
+  it("handles success with provided id", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
       totalEntities: 1,
     });
 
-    await registeredHandler({ ...validArgs, id: "box-001" });
+    const response = await registeredHandler({ ...validArgs, id: "box-42" });
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.id).toBe("box-001");
+    expect(command.entity.id).toBe("box-42");
+    expect(response.structuredContent.entityId).toBe("box-42");
   });
 
   it("returns error response when executeCommand rejects", async () => {
@@ -128,6 +115,7 @@ describe("registerAddBoxEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+    expect(response.structuredContent.message).toContain("Viewer error");
   });
 
   it("returns error response when result.success is false", async () => {
@@ -140,5 +128,18 @@ describe("registerAddBoxEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+    expect(response.structuredContent.message).toContain("Cannot render box");
+  });
+
+  it("forwards description to entity command", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      totalEntities: 1,
+    });
+
+    await registeredHandler({ ...validArgs, description: "<p>A box</p>" });
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command.entity.description).toBe("<p>A box</p>");
   });
 });

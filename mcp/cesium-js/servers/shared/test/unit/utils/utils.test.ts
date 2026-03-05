@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { ResponseEmoji, RESPONSE_EMOJIS } from "../../../src/utils/constants";
+import type { ICommunicationServer } from "../../../src/communications/communication-server";
+import type { CommandInput, CommandResult } from "../../../src/types/types";
 import {
-  formatErrorMessage,
-  buildSuccessResponse,
   buildErrorResponse,
+  buildSuccessResponse,
   executeWithTiming,
-} from "../../src/utils/utils";
-import { ResponseEmoji, RESPONSE_EMOJIS } from "../../src/utils/constants";
-import type { ICommunicationServer } from "../../src/communications/communication-server";
-import type { CommandInput, CommandResult } from "../../src/types/types";
+  formatErrorMessage,
+} from "../../../build/utils/utils";
 
 // ---------------------------------------------------------------------------
 describe("formatErrorMessage", () => {

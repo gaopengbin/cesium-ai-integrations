@@ -47,10 +47,10 @@ describe("registerAddCorridorEntity", () => {
     );
   });
 
-  it("returns success response for valid corridor entity", async () => {
+  it("handles basic success with default options", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
-      totalEntities: 1,
+      totalEntities: 10,
     });
 
     const response = await registeredHandler(validArgs);
@@ -58,30 +58,16 @@ describe("registerAddCorridorEntity", () => {
     expect(response.structuredContent.success).toBe(true);
     expect(response.structuredContent.message).toContain("Corridor entity");
     expect(response.isError).toBe(false);
-  });
-
-  it("sends entity_add command with corridor graphics", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
+    expect(response.structuredContent.entityName).toBe("Corridor");
+    expect(response.structuredContent.message).toContain('"Corridor"');
+    expect(response.structuredContent.message).toContain("3");
+    expect(response.structuredContent.stats?.totalEntities).toBe(10);
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.type).toBe("entity_add");
     expect(command.entity.corridor).toEqual(validArgs.corridor);
-  });
-
-  it("includes position count in success message", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    const response = await registeredHandler(validArgs);
-
-    expect(response.structuredContent.message).toContain("3");
+    expect(command.entity.id).toMatch(/^corridor_/);
+    expect(command.entity.position).toBeUndefined();
   });
 
   it("uses provided name", async () => {
@@ -99,28 +85,20 @@ describe("registerAddCorridorEntity", () => {
     expect(response.structuredContent.message).toContain("Highway I-70");
   });
 
-  it("uses provided id", async () => {
+  it("handles success with provided id", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
       totalEntities: 1,
     });
 
-    await registeredHandler({ ...validArgs, id: "corridor-001" });
-
-    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.id).toBe("corridor-001");
-  });
-
-  it("does not include a top-level position property", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
+    const response = await registeredHandler({
+      ...validArgs,
+      id: "corridor-42",
     });
 
-    await registeredHandler(validArgs);
-
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.position).toBeUndefined();
+    expect(command.entity.id).toBe("corridor-42");
+    expect(response.structuredContent.entityId).toBe("corridor-42");
   });
 
   it("returns error response when executeCommand rejects", async () => {
@@ -145,5 +123,17 @@ describe("registerAddCorridorEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+  });
+
+  it("forwards description to entity command", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      totalEntities: 1,
+    });
+
+    await registeredHandler({ ...validArgs, description: "<p>A road</p>" });
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command.entity.description).toBe("<p>A road</p>");
   });
 });

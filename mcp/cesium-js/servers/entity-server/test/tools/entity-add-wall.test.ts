@@ -46,10 +46,10 @@ describe("registerAddWallEntity", () => {
     );
   });
 
-  it("returns success response for valid wall entity", async () => {
+  it("handles basic success with default options", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
-      totalEntities: 1,
+      totalEntities: 12,
     });
 
     const response = await registeredHandler(validArgs);
@@ -57,30 +57,16 @@ describe("registerAddWallEntity", () => {
     expect(response.structuredContent.success).toBe(true);
     expect(response.structuredContent.message).toContain("Wall entity");
     expect(response.isError).toBe(false);
-  });
-
-  it("sends entity_add command with wall graphics", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
+    expect(response.structuredContent.entityName).toBe("Wall");
+    expect(response.structuredContent.message).toContain('"Wall"');
+    expect(response.structuredContent.message).toContain("3");
+    expect(response.structuredContent.stats?.totalEntities).toBe(12);
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
     expect(command.type).toBe("entity_add");
     expect(command.entity.wall).toEqual(validArgs.wall);
-  });
-
-  it("includes position count in success message", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    const response = await registeredHandler(validArgs);
-
-    expect(response.structuredContent.message).toContain("3");
+    expect(command.entity.id).toMatch(/^wall_/);
+    expect(command.entity.position).toBeUndefined();
   });
 
   it("uses provided name", async () => {
@@ -98,28 +84,17 @@ describe("registerAddWallEntity", () => {
     expect(response.structuredContent.message).toContain("Border Wall");
   });
 
-  it("uses provided id", async () => {
+  it("handles success with provided id", async () => {
     mockCommunicationServer.executeCommand.mockResolvedValue({
       success: true,
       totalEntities: 1,
     });
 
-    await registeredHandler({ ...validArgs, id: "wall-001" });
+    const response = await registeredHandler({ ...validArgs, id: "wall-42" });
 
     const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.id).toBe("wall-001");
-  });
-
-  it("does not include a top-level position property", async () => {
-    mockCommunicationServer.executeCommand.mockResolvedValue({
-      success: true,
-      totalEntities: 1,
-    });
-
-    await registeredHandler(validArgs);
-
-    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
-    expect(command.entity.position).toBeUndefined();
+    expect(command.entity.id).toBe("wall-42");
+    expect(response.structuredContent.entityId).toBe("wall-42");
   });
 
   it("returns error response when executeCommand rejects", async () => {
@@ -144,5 +119,17 @@ describe("registerAddWallEntity", () => {
 
     expect(response.structuredContent.success).toBe(false);
     expect(response.isError).toBe(true);
+  });
+
+  it("forwards description to entity command", async () => {
+    mockCommunicationServer.executeCommand.mockResolvedValue({
+      success: true,
+      totalEntities: 1,
+    });
+
+    await registeredHandler({ ...validArgs, description: "<p>A barrier</p>" });
+
+    const command = mockCommunicationServer.executeCommand.mock.calls[0][0];
+    expect(command.entity.description).toBe("<p>A barrier</p>");
   });
 });

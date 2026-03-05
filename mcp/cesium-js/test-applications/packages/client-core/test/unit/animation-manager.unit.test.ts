@@ -85,34 +85,42 @@ describe("Animation Manager Unit Tests", () => {
   let commandHandlers: Map<string, (cmd: MCPCommand) => unknown>;
 
   beforeEach(() => {
-    // Extend the global Cesium mock with animation-specific classes
+    // Wrap specific constructors with vi.fn() for call tracking
+    // Note: cesium-mock.ts already provides all base implementations
     const existingCesium = (globalThis as unknown as Record<string, unknown>)
       .Cesium as Record<string, unknown>;
+
+    // Store original implementations
+    const OriginalSampledPositionProperty =
+      existingCesium.SampledPositionProperty;
+    const OriginalConstantProperty = existingCesium.ConstantProperty;
+    const OriginalPolylineGlowMaterialProperty =
+      existingCesium.PolylineGlowMaterialProperty;
+
+    // Wrap constructors that need call tracking
     (globalThis as unknown as Record<string, unknown>).Cesium = {
       ...existingCesium,
-      Color: {
-        ...(existingCesium.Color as object),
-        LIME: { r: 0, g: 1, b: 0, a: 1 },
-        WHITE: { r: 1, g: 1, b: 1, a: 1 },
-      },
-      SampledPositionProperty: vi.fn(function () {
-        return {
-          addSample: vi.fn(),
-          setInterpolationOptions: vi.fn(),
-        };
+      SampledPositionProperty: vi.fn(function (
+        this: unknown,
+        ...args: unknown[]
+      ) {
+        return new (OriginalSampledPositionProperty as new (
+          ...args: unknown[]
+        ) => unknown)(...args);
       }),
-      LagrangePolynomialApproximation: {},
-      ConstantProperty: vi.fn(function (val: unknown) {
-        return { val };
+      ConstantProperty: vi.fn(function (this: unknown, ...args: unknown[]) {
+        return new (OriginalConstantProperty as new (
+          ...args: unknown[]
+        ) => unknown)(...args);
       }),
-      PolylineGlowMaterialProperty: vi.fn(function (opts: unknown) {
-        return { opts };
+      PolylineGlowMaterialProperty: vi.fn(function (
+        this: unknown,
+        ...args: unknown[]
+      ) {
+        return new (OriginalPolylineGlowMaterialProperty as new (
+          ...args: unknown[]
+        ) => unknown)(...args);
       }),
-      DynamicAtmosphereLightingType: {
-        NONE: "NONE",
-        SUNLIGHT: "SUNLIGHT",
-        SCENE_LIGHT: "SCENE_LIGHT",
-      },
     };
 
     // Clear all mocks between tests
@@ -869,8 +877,14 @@ describe("Animation Manager Unit Tests", () => {
         trackCamera: false,
       };
 
-      createHandler({ ...base, animationId: "anim-A" } as MCPCommand);
-      createHandler({ ...base, animationId: "anim-B" } as MCPCommand);
+      createHandler({
+        ...base,
+        animationId: "anim-A",
+      } as unknown as MCPCommand);
+      createHandler({
+        ...base,
+        animationId: "anim-B",
+      } as unknown as MCPCommand);
 
       const result = handler()({} as MCPCommand) as {
         success: boolean;
@@ -972,7 +986,8 @@ describe("Animation Manager Unit Tests", () => {
 
     it("should work when atmosphere is undefined on scene", () => {
       // Remove atmosphere from scene
-      (mockViewer.scene as { atmosphere: undefined }).atmosphere = undefined;
+      (mockViewer.scene as unknown as { atmosphere: undefined }).atmosphere =
+        undefined;
 
       const cmd: MCPCommand = {
         type: "globe_lighting",
