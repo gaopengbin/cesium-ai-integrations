@@ -14,7 +14,6 @@ import SSECommunicationManager from "./communications/sse-communication.js";
 import WebSocketCommunicationManager from "./communications/websocket-communication.js";
 import type { ManagerInterface, ServerConfig } from "./types/mcp.js";
 import { getErrorMessage } from "./shared/error-utils.js";
-import { CesiumGeolocationManager } from "./managers/geolocation-manager.js";
 
 export interface CesiumAppConfig {
   cesiumAccessToken: string;
@@ -113,7 +112,6 @@ export class CesiumApp {
       new CesiumCameraController(this.viewer),
       new CesiumEntityManager(this.viewer),
       new CesiumAnimationManager(this.viewer),
-      new CesiumGeolocationManager(this.viewer),
     ];
   }
 

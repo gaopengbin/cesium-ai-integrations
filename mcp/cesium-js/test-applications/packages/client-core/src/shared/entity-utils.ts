@@ -14,16 +14,6 @@ import type {
 } from "../types/cesium-types.js";
 
 /**
- * Get entity by ID from viewer
- */
-export function getEntityById(
-  viewer: CesiumViewer,
-  entityId: string,
-): CesiumEntity | undefined {
-  return viewer.entities.getById(entityId);
-}
-
-/**
  * Remove entity by ID from viewer
  */
 export function removeEntityById(
@@ -35,62 +25,6 @@ export function removeEntityById(
     return viewer.entities.remove(entity);
   }
   return false;
-}
-
-/**
- * Remove multiple entities by their IDs from viewer
- * Returns the count of successfully removed entities
- */
-export function removeEntitiesByIds(
-  viewer: CesiumViewer,
-  entityIds: string[],
-): number {
-  let removedCount = 0;
-  for (const id of entityIds) {
-    if (removeEntityById(viewer, id)) {
-      removedCount++;
-    }
-  }
-  return removedCount;
-}
-
-/**
- * Configure path visualization properties for an entity
- * Returns true if the entity has a path and was configured, false otherwise
- */
-export function configureEntityPath(
-  entity: CesiumEntity,
-  options: {
-    leadTime?: number;
-    trailTime?: number;
-    width?: number;
-    color?: string | ColorRGBA;
-  },
-): boolean {
-  if (!entity.path) {
-    return false;
-  }
-
-  if (options.leadTime !== undefined) {
-    entity.path.leadTime = new Cesium.ConstantProperty(options.leadTime);
-  }
-  if (options.trailTime !== undefined) {
-    entity.path.trailTime = new Cesium.ConstantProperty(options.trailTime);
-  }
-  if (options.width !== undefined) {
-    entity.path.width = new Cesium.ConstantProperty(options.width);
-  }
-  if (options.color) {
-    const cesiumColor = parseColor(options.color, Cesium.Color.LIME);
-    if (cesiumColor) {
-      entity.path.material = new Cesium.PolylineGlowMaterialProperty({
-        glowPower: 0.1,
-        color: cesiumColor,
-      });
-    }
-  }
-
-  return true;
 }
 
 /**

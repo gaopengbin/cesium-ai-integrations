@@ -35,10 +35,6 @@ const config: CesiumAppConfig = {
       name: "Animation Server",
       port: parseInt(process.env.MCP_ANIMATION_PORT || "3004"),
     },
-    {
-      name: "Geolocation Server",
-      port: parseInt(process.env.MCP_GEOLOCATION_PORT || "3005"),
-    },
   ],
 };
 
