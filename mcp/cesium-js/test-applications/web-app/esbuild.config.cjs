@@ -22,7 +22,7 @@ const define = {
   ),
   "process.env.MCP_ANIMATION_PORT": JSON.stringify(
     process.env.MCP_ANIMATION_PORT || "3004",
-  )
+  ),
 };
 
 esbuild
