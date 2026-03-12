@@ -34,6 +34,8 @@ Cesium MCP Apps live in [`mcp-apps/`](./mcp-apps/README.md). See the [mcp-apps R
 |---|---|---|
 | 📚 [cesium-context7](./external/cesium-context7/README.md) | `external/cesium-context7/` | Real-time access to Cesium documentation and code examples via Context7. Includes agent skills for VS Code and Claude Code. |
 
+## 📦 Available MCP Apps
+
 ## 🚀 Getting Started
 
 See the individual READMEs for full details:
