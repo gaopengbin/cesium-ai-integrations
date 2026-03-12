@@ -2,6 +2,8 @@
 
 MCP server providing geolocation-aware search and routing capabilities using free, open-source providers (Nominatim, Overpass, OSRM) for 3D visualization in CesiumJS.
 
+<video src="https://github.com/user-attachments/assets/903eab9c-01af-42a4-8f09-b6e19e05ff5c" controls></video>
+
 ## ✨ Features
 
 - **Geocoding**: Convert addresses and place names to coordinates ("Empire State Building" → lat/long)

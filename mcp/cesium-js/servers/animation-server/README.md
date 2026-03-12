@@ -2,7 +2,7 @@
 
 MCP server for Cesium animation, path-based entity control, and clock management.
 
-<video src="https://github.com/user-attachments/assets/348f7575-4cd2-4732-9885-2da40962bdf3" controls></video>
+<video src="https://github.com/user-attachments/assets/903eab9c-01af-42a4-8f09-b6e19e05ff5c" controls></video>
 
 ## ✨ Features
 
