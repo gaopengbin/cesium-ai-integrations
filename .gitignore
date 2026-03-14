@@ -13,9 +13,11 @@ Thumbs.db
 # !.vscode/mcp.json
 !.vscode/extensions.json
 
-.github/hooks/*
-.github/instructions/*
-.github/skills/*
+.github/*
+!.github/ISSUE_TEMPLATE/*
+!.github/workflows/*
 
 *githooks/*
 *mcp/mcp-apps*
+
+.claude/*

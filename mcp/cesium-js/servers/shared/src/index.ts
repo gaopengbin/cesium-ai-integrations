@@ -25,6 +25,8 @@ export {
   ResponseEmoji,
   RESPONSE_EMOJIS,
 } from "./utils/constants.js";
+export { registerSearchTools } from "./tools/index.js";
+export type { ToolRegistry, ToolRegistryEntry } from "./tools/index.js";
 export {
   formatErrorMessage,
   executeWithTiming,
