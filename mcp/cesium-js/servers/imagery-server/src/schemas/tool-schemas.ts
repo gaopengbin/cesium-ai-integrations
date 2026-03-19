@@ -54,6 +54,14 @@ export const ImageryAddInputSchema = z.object({
   rectangle: ImageryRectangleSchema.optional().describe(
     "Geographic extent to restrict the imagery layer",
   ),
+  assetId: z
+    .number()
+    .optional()
+    .describe("Cesium Ion asset ID (required for IonImageryProvider)"),
+  key: z
+    .string()
+    .optional()
+    .describe("API key (required for BingMapsImageryProvider)"),
 });
 
 /**

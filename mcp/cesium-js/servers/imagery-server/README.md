@@ -58,6 +58,8 @@ Supports various imagery provider types for overlaying map tiles, satellite imag
 - `tileMatrixSetID` (optional): Tile matrix set identifier (for WMTS providers)
 - `maximumLevel` (optional): Maximum zoom level (0–30)
 - `minimumLevel` (optional): Minimum zoom level (0–30)
+- `assetId` (optional): Cesium Ion asset ID (required for `IonImageryProvider`)
+- `key` (optional): API key (required for `BingMapsImageryProvider`)
 - `alpha` (optional): Layer opacity (0 = transparent, 1 = opaque)
 - `show` (optional): Whether the layer is visible (default: true)
 - `rectangle` (optional): Geographic extent to restrict the imagery layer (`west`, `south`, `east`, `north` in degrees)

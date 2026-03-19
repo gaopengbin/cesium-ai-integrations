@@ -7,8 +7,13 @@ import type {
   MCPCommand,
   CommandHandler,
   ManagerInterface,
-  MCPCommandResult,
 } from "../types/mcp.js";
+import type {
+  ImageryAddResult,
+  ImageryRemoveResult,
+  ImageryLayerInfo,
+  ImageryListResult,
+} from "../types/imagery-types.js";
 import type { CesiumViewer } from "../types/cesium-types.js";
 import {
   ImageryProvider,
@@ -24,33 +29,6 @@ import {
   SingleTileImageryProvider,
   Rectangle,
 } from "cesium";
-
-export interface ImageryAddResult extends MCPCommandResult {
-  layerIndex?: number;
-  layerName?: string;
-  providerType?: string;
-  totalLayers?: number;
-}
-
-export interface ImageryRemoveResult extends MCPCommandResult {
-  removedIndex?: number;
-  removedName?: string;
-  removedCount?: number;
-  totalLayers?: number;
-}
-
-export interface ImageryLayerInfo {
-  index: number;
-  name: string;
-  show: boolean;
-  alpha: number;
-  providerType?: string;
-}
-
-export interface ImageryListResult extends MCPCommandResult {
-  layers?: ImageryLayerInfo[];
-  totalCount?: number;
-}
 
 // Extend ImageryLayer with custom metadata
 interface ImageryLayerWithMeta extends ImageryLayer {
@@ -101,7 +79,7 @@ class CesiumImageryManager implements ManagerInterface {
       : undefined;
 
     switch (providerType) {
-      case "UrlTemplate":
+      case "UrlTemplateImageryProvider":
         return new UrlTemplateImageryProvider({
           url,
           minimumLevel,
@@ -109,7 +87,7 @@ class CesiumImageryManager implements ManagerInterface {
           rectangle: rect,
         });
 
-      case "WMS":
+      case "WebMapServiceImageryProvider":
         return new WebMapServiceImageryProvider({
           url,
           layers: layers || "",
@@ -121,7 +99,7 @@ class CesiumImageryManager implements ManagerInterface {
           rectangle: rect,
         });
 
-      case "WMTS":
+      case "WebMapTileServiceImageryProvider":
         return new WebMapTileServiceImageryProvider({
           url,
           layer: layers || "",
@@ -131,37 +109,37 @@ class CesiumImageryManager implements ManagerInterface {
           rectangle: rect,
         });
 
-      case "ArcGIS":
+      case "ArcGisMapServerImageryProvider":
         return await ArcGisMapServerImageryProvider.fromUrl(url, {
           rectangle: rect,
         });
 
-      case "Bing":
+      case "BingMapsImageryProvider":
         return await BingMapsImageryProvider.fromUrl(url, {
           key: (cmd.key as string) || "",
         });
 
-      case "TMS":
+      case "TileMapServiceImageryProvider":
         return await TileMapServiceImageryProvider.fromUrl(url, {
           minimumLevel,
           maximumLevel,
           rectangle: rect,
         });
 
-      case "OSM":
+      case "OpenStreetMapImageryProvider":
         return new OpenStreetMapImageryProvider({
           url: url || "https://tile.openstreetmap.org/",
         });
 
-      case "Ion":
+      case "IonImageryProvider":
         return await IonImageryProvider.fromAssetId(cmd.assetId as number);
 
-      case "SingleTile":
+      case "SingleTileImageryProvider":
         return await SingleTileImageryProvider.fromUrl(url, {
           rectangle: rect || Rectangle.MAX_VALUE,
         });
 
-      case "GoogleEarth":
+      case "GoogleEarthEnterpriseImageryProvider":
         return new UrlTemplateImageryProvider({
           url,
           minimumLevel,
@@ -178,31 +156,31 @@ class CesiumImageryManager implements ManagerInterface {
    */
   private getProviderTypeName(provider: ImageryProvider): string {
     if (provider instanceof WebMapServiceImageryProvider) {
-      return "WMS";
+      return "WebMapServiceImageryProvider";
     }
     if (provider instanceof WebMapTileServiceImageryProvider) {
-      return "WMTS";
+      return "WebMapTileServiceImageryProvider";
     }
     if (provider instanceof ArcGisMapServerImageryProvider) {
-      return "ArcGIS";
+      return "ArcGisMapServerImageryProvider";
     }
     if (provider instanceof BingMapsImageryProvider) {
-      return "Bing";
+      return "BingMapsImageryProvider";
     }
     if (provider instanceof OpenStreetMapImageryProvider) {
-      return "OSM";
+      return "OpenStreetMapImageryProvider";
     }
     if (provider instanceof TileMapServiceImageryProvider) {
-      return "TMS";
+      return "TileMapServiceImageryProvider";
     }
     if (provider instanceof IonImageryProvider) {
-      return "Ion";
+      return "IonImageryProvider";
     }
     if (provider instanceof SingleTileImageryProvider) {
-      return "SingleTile";
+      return "SingleTileImageryProvider";
     }
     if (provider instanceof UrlTemplateImageryProvider) {
-      return "UrlTemplate";
+      return "UrlTemplateImageryProvider";
     }
     return "Unknown";
   }
@@ -345,10 +323,17 @@ class CesiumImageryManager implements ManagerInterface {
           name,
           show: layer.show,
           alpha: layer.alpha,
+          ready: layer.ready,
         };
 
         if (layer.imageryProvider) {
           info.providerType = this.getProviderTypeName(layer.imageryProvider);
+          const provider = layer.imageryProvider as ImageryProvider & {
+            url?: string;
+          };
+          if (provider.url) {
+            info.url = provider.url;
+          }
         }
 
         layers.push(info);

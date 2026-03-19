@@ -45,6 +45,8 @@ export function registerImageryAdd(
       alpha,
       show,
       rectangle,
+      assetId,
+      key,
     }: ImageryAddInput) => {
       try {
         const command = {
@@ -61,6 +63,8 @@ export function registerImageryAdd(
           alpha,
           show,
           rectangle,
+          assetId,
+          key,
         };
 
         const { result, responseTime } =
