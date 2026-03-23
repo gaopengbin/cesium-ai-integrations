@@ -51,7 +51,9 @@ export function registerImageryRemove(
           );
 
         if (result.success) {
-          const removedCount = result.removedCount || 1;
+          const removedCount = removeAll
+            ? (result.removedCount ?? 0)
+            : (result.removedCount ?? 1);
           const identifier =
             name || (index !== undefined ? `index ${index}` : "all");
 

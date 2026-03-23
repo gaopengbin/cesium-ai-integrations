@@ -9,7 +9,9 @@ import type { ImageryListResult } from "../utils/types.js";
 import {
   executeWithTiming,
   formatErrorMessage,
+  buildSuccessResponse,
   buildErrorResponse,
+  ResponseEmoji,
   type ICommunicationServer,
 } from "@cesium-mcp/shared";
 
@@ -59,30 +61,7 @@ export function registerImageryList(
             },
           };
 
-          // Create summary text
-          let summaryText = `${output.message} (${responseTime}ms)`;
-          if (layers.length > 0) {
-            summaryText += "\n\nImagery Layers:\n";
-
-            layers.forEach((layer, idx) => {
-              const visibility = layer.show ? "visible" : "hidden";
-              summaryText += `${idx + 1}. ${layer.name || `Layer ${layer.index}`} [${visibility}, alpha=${layer.alpha}]`;
-              if (layer.providerType && includeDetails) {
-                summaryText += ` (${layer.providerType})`;
-              }
-              summaryText += "\n";
-            });
-          }
-
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: summaryText,
-              },
-            ],
-            structuredContent: output,
-          };
+          return buildSuccessResponse(ResponseEmoji.List, responseTime, output);
         }
 
         throw new Error(result.error || "Unknown error from Cesium");

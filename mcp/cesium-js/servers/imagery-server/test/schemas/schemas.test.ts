@@ -140,12 +140,11 @@ describe("Imagery Schemas", () => {
       ).toThrow();
     });
 
-    it("should reject missing url", () => {
-      expect(() =>
-        ImageryAddInputSchema.parse({
-          type: "UrlTemplateImageryProvider",
-        }),
-      ).toThrow();
+    it("should accept missing url (optional for IonImageryProvider)", () => {
+      const result = ImageryAddInputSchema.parse({
+        type: "UrlTemplateImageryProvider",
+      });
+      expect(result.url).toBeUndefined();
     });
 
     it("should reject missing type", () => {

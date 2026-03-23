@@ -87,6 +87,26 @@ vi.mock("cesium", () => {
     }
   }
 
+  class MockGoogleEarthEnterpriseImageryProvider extends MockImageryProvider {
+    static fromMetadata(metadata: unknown) {
+      const provider = new MockGoogleEarthEnterpriseImageryProvider();
+      provider.url = (metadata as { url: string }).url;
+      return provider;
+    }
+  }
+
+  class MockGoogleEarthEnterpriseMetadata {
+    url: string;
+    constructor() {
+      this.url = "";
+    }
+    static async fromUrl(url: string) {
+      const metadata = new MockGoogleEarthEnterpriseMetadata();
+      metadata.url = url;
+      return metadata;
+    }
+  }
+
   return {
     ImageryProvider: MockImageryProvider,
     ImageryLayer: class {},
@@ -99,6 +119,9 @@ vi.mock("cesium", () => {
     TileMapServiceImageryProvider: MockTileMapServiceImageryProvider,
     IonImageryProvider: MockIonImageryProvider,
     SingleTileImageryProvider: MockSingleTileImageryProvider,
+    GoogleEarthEnterpriseImageryProvider:
+      MockGoogleEarthEnterpriseImageryProvider,
+    GoogleEarthEnterpriseMetadata: MockGoogleEarthEnterpriseMetadata,
     Rectangle: {
       fromDegrees: vi.fn(
         (west: number, south: number, east: number, north: number) => ({
@@ -304,6 +327,22 @@ describe("Imagery Manager MCP Communication Tests", () => {
       expect(response.providerType).toBe("SingleTileImageryProvider");
     });
 
+    it("should add a GoogleEarthEnterpriseImageryProvider layer", async () => {
+      const command: MCPCommand = {
+        type: "imagery_add",
+        providerType: "GoogleEarthEnterpriseImageryProvider",
+        url: "https://earth.localdomain",
+      };
+
+      const handler = commandHandlers.get("imagery_add")!;
+      const response = (await handler(command)) as ImageryAddResult;
+
+      expect(response.success).toBe(true);
+      expect(response.providerType).toBe(
+        "GoogleEarthEnterpriseImageryProvider",
+      );
+    });
+
     it("should apply alpha and show settings", async () => {
       const command: MCPCommand = {
         type: "imagery_add",
@@ -423,6 +462,24 @@ describe("Imagery Manager MCP Communication Tests", () => {
       expect(response.success).toBe(true);
       expect(response.removedCount).toBe(2);
       expect(response.totalLayers).toBe(0);
+    });
+
+    it("should handle removeAll on empty collection", () => {
+      // Remove all first to empty the collection
+      const handler = commandHandlers.get("imagery_remove")!;
+      handler({
+        type: "imagery_remove",
+        removeAll: true,
+      } as MCPCommand);
+
+      // Now removeAll on empty
+      const response = handler({
+        type: "imagery_remove",
+        removeAll: true,
+      } as MCPCommand) as ImageryRemoveResult;
+
+      expect(response.success).toBe(true);
+      expect(response.removedCount).toBe(0);
     });
 
     it("should return error for invalid index", () => {

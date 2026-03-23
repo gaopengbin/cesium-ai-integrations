@@ -14,7 +14,12 @@ import {
  */
 export const ImageryAddInputSchema = z.object({
   type: ImageryProviderTypeSchema,
-  url: z.string().describe("URL of the imagery service or tile template"),
+  url: z
+    .string()
+    .optional()
+    .describe(
+      "URL of the imagery service or tile template (not required for IonImageryProvider)",
+    ),
   name: z.string().optional().describe("Display name for the imagery layer"),
   layers: z
     .string()

@@ -103,6 +103,19 @@ describe("registerImageryRemove", () => {
       expect(response.structuredContent.message).not.toMatch(/\blayers\b/);
     });
 
+    it("should report 0 removed when removeAll on empty collection", async () => {
+      mockCommunicationServer.executeCommand.mockResolvedValue({
+        success: true,
+        removedCount: 0,
+      });
+
+      const response = await registeredHandler({ removeAll: true });
+
+      expect(response.structuredContent.success).toBe(true);
+      expect(response.structuredContent.removedCount).toBe(0);
+      expect(response.structuredContent.message).toContain("0");
+    });
+
     it("should use result removedIndex when available", async () => {
       mockCommunicationServer.executeCommand.mockResolvedValue({
         success: true,

@@ -27,6 +27,8 @@ import {
   TileMapServiceImageryProvider,
   IonImageryProvider,
   SingleTileImageryProvider,
+  GoogleEarthEnterpriseImageryProvider,
+  GoogleEarthEnterpriseMetadata,
   Rectangle,
 } from "cesium";
 
@@ -139,12 +141,10 @@ class CesiumImageryManager implements ManagerInterface {
           rectangle: rect || Rectangle.MAX_VALUE,
         });
 
-      case "GoogleEarthEnterpriseImageryProvider":
-        return new UrlTemplateImageryProvider({
-          url,
-          minimumLevel,
-          maximumLevel,
-        });
+      case "GoogleEarthEnterpriseImageryProvider": {
+        const metadata = await GoogleEarthEnterpriseMetadata.fromUrl(url);
+        return GoogleEarthEnterpriseImageryProvider.fromMetadata(metadata, {});
+      }
 
       default:
         return null;
@@ -178,6 +178,9 @@ class CesiumImageryManager implements ManagerInterface {
     }
     if (provider instanceof SingleTileImageryProvider) {
       return "SingleTileImageryProvider";
+    }
+    if (provider instanceof GoogleEarthEnterpriseImageryProvider) {
+      return "GoogleEarthEnterpriseImageryProvider";
     }
     if (provider instanceof UrlTemplateImageryProvider) {
       return "UrlTemplateImageryProvider";

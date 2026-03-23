@@ -98,7 +98,7 @@ describe("registerImageryList", () => {
       });
     });
 
-    it("should include summary text with layer details", async () => {
+    it("should include layer details in structuredContent", async () => {
       const layers = [
         {
           index: 0,
@@ -116,12 +116,14 @@ describe("registerImageryList", () => {
 
       const response = await registeredHandler({ includeDetails: true });
 
-      expect(response.content[0].text).toContain("Base Layer");
-      expect(response.content[0].text).toContain("visible");
-      expect(response.content[0].text).toContain("IonImageryProvider");
+      expect(response.structuredContent.layers[0].name).toBe("Base Layer");
+      expect(response.structuredContent.layers[0].show).toBe(true);
+      expect(response.structuredContent.layers[0].providerType).toBe(
+        "IonImageryProvider",
+      );
     });
 
-    it("should show hidden status for non-visible layers", async () => {
+    it("should include show status in structuredContent for hidden layers", async () => {
       const layers = [
         { index: 0, name: "Hidden Layer", show: false, alpha: 0.5 },
       ];
@@ -133,10 +135,10 @@ describe("registerImageryList", () => {
 
       const response = await registeredHandler({});
 
-      expect(response.content[0].text).toContain("hidden");
+      expect(response.structuredContent.layers[0].show).toBe(false);
     });
 
-    it("should use layer index as fallback name", async () => {
+    it("should handle layers without name in structuredContent", async () => {
       const layers = [{ index: 0, show: true, alpha: 1 }];
 
       mockCommunicationServer.executeCommand.mockResolvedValue({
@@ -146,7 +148,8 @@ describe("registerImageryList", () => {
 
       const response = await registeredHandler({});
 
-      expect(response.content[0].text).toContain("Layer 0");
+      expect(response.structuredContent.layers[0].index).toBe(0);
+      expect(response.content[0].text).toContain("1 imagery layer");
     });
 
     it("should default includeDetails to false", async () => {
