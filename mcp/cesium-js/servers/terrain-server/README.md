@@ -2,6 +2,8 @@
 
 MCP server for managing terrain providers on CesiumJS 3D globe applications.
 
+<video src="https://github.com/user-attachments/assets/11ea7650-d795-4c69-a710-448bf764b7a4" controls></video>
+
 ## ✨ Features
 
 - **Multiple Source Types**: Support for Cesium Ion terrain assets, direct terrain server URLs, and flat WGS84 ellipsoid
@@ -116,6 +118,52 @@ MAX_RETRIES=10                  # Max connection retry attempts
 COMMUNICATION_PROTOCOL=websocket # websocket or sse
 STRICT_PORT=false               # Whether to fail if port is taken
 MCP_TRANSPORT=stdio             # stdio or streamable-http
+```
+
+## 🧪 Example Queries
+
+Try these natural language queries with your AI client:
+
+### Loading Terrain
+
+```
+"Load Cesium World Terrain"
+"Enable terrain on the globe"
+"Switch to Cesium World Terrain with water effects"
+"Load terrain with vertex normals enabled for better lighting"
+```
+
+### Custom Terrain Sources
+
+```
+"Load terrain from https://example.com/terrain"
+"Set terrain provider to my quantized-mesh server at https://tiles.example.com/terrain"
+```
+
+### Querying Terrain
+
+```
+"What terrain provider is currently active?"
+"Show me the current terrain configuration"
+"Is water mask enabled on the current terrain?"
+```
+
+### Showcasing Terrain Features
+
+```
+"Fly to the Grand Canyon and enable Cesium World Terrain"
+"Load terrain with vertex normals and fly to the Swiss Alps to see mountain lighting"
+"Enable terrain with water mask and fly to Hawaii to see ocean depth"
+"Switch between flat and terrain at the Grand Canyon to compare the difference"
+"Enable terrain with water mask and fly to the Norwegian Fjords to see ocean channels cutting between steep cliffs"
+```
+
+### Resetting Terrain
+
+```
+"Reset the globe to flat terrain"
+"Remove the terrain and show a flat ellipsoid"
+"Switch to a flat globe with no elevation"
 ```
 
 ## 🧪 Testing
